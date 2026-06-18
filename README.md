@@ -5,7 +5,7 @@ Aplicativo de gestão financeira com interface acolhedora e design Bento Grid.
 
 ## 🚀 Acesse o App
 
-[https://seu-usuario.github.io/meu-app-financas](https://seu-usuario.github.io/meu-app-financas)
+[https://seu-usuario.github.io/meu-app-financas](https://isasusuki.github.io/finan-as/index.html)
 
 ## 📸 Demonstração
 
