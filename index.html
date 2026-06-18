@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Finanças Bento Grid • Gestão Acolhedora</title>
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -27,6 +25,8 @@
     </script>
     
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -35,18 +35,16 @@
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-slide-in-right { animation: slideInRight 0.3s ease-out forwards; }
         .animate-pulse-slow { animation: pulse 2s ease-in-out infinite; }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -59,21 +57,8 @@
             color: #2D3436;
             font-family: 'Quicksand', sans-serif;
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
         }
-        * { box-sizing: border-box; }
-        .transition-all { transition: all 0.2s ease-in-out; }
         
-        /* Loading Screen */
-        #loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            flex-direction: column;
-            gap: 20px;
-        }
         .loader {
             width: 48px;
             height: 48px;
@@ -82,60 +67,26 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        
+        .hidden { display: none !important; }
+        .transition-all { transition: all 0.2s ease-in-out; }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading">
+    <!-- Loading -->
+    <div id="loading" class="flex items-center justify-center min-h-screen flex-col gap-4">
         <div class="loader"></div>
         <p class="text-sm font-semibold text-[#636E72]">Carregando aplicativo...</p>
     </div>
 
-    <!-- Root Element -->
-    <div id="root" style="display:none;"></div>
+    <!-- Root -->
+    <div id="root" class="hidden"></div>
 
-    <!-- React e ReactDOM -->
+    <!-- React + ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Script Principal -->
-    <script type="text/babel">
-        // Oculta o loading e mostra o app
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('root').style.display = 'block';
-
-        const { useState, useEffect, useMemo } = React;
-
-        // ============================================================
-        // ÍCONES
-        // ============================================================
-        const Icon = ({ name, className = "w-5 h-5", strokeWidth = 2.5 }) => {
-            const icons = {
-                clock: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
-                'trending-up': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>,
-                'trending-down': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></svg>,
-                calendar: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
-                sparkles: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M12 3v1m0 16v1M4 12H3m18 0h-1M18.364 5.636l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z" /></svg>,
-                'arrow-right': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>,
-                plus: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
-                trash: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>,
-                'alert-triangle': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4m0 4h.01" /></svg>,
-                check: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
-                bell: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9Zm-4.27 13a2 2 0 0 1-3.46 0" /></svg>,
-                'bell-off': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M13.73 21a2 2 0 0 1-3.46 0m5.12-7.85A5.96 5.96 0 0 0 18 8c0-2-.72-3.83-1.9-5.2M3 3l18 18" /></svg>,
-                'rotate-ccw': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M1 4v6h6M2.05 13.5a9 9 0 1 1 .55-5.5L1 10" /></svg>,
-                search: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>,
-                x: <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
-                'chevron-right': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>,
-                'thumbs-up': <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>,
-            };
-            return icons[name] || null;
-        };
-
+    <script>
         // ============================================================
         // UTILITÁRIOS
         // ============================================================
@@ -178,30 +129,101 @@
         ];
 
         // ============================================================
-        // COMPONENTE DE ONBOARDING (VERSÃO RESUMIDA PARA GITHUB)
+        // ÍCONES (versão JavaScript puro)
+        // ============================================================
+        function Icon({ name, className = "w-5 h-5", strokeWidth = 2.5 }) {
+            const icons = {
+                clock: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('circle', { cx: "12", cy: "12", r: "10" }),
+                    React.createElement('polyline', { points: "12 6 12 12 16 14" })
+                ),
+                'trending-up': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('polyline', { points: "23 6 13.5 15.5 8.5 10.5 1 18" }),
+                    React.createElement('polyline', { points: "17 6 23 6 23 12" })
+                ),
+                'trending-down': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('polyline', { points: "23 18 13.5 8.5 8.5 13.5 1 6" }),
+                    React.createElement('polyline', { points: "17 18 23 18 23 12" })
+                ),
+                calendar: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('rect', { x: "3", y: "4", width: "18", height: "18", rx: "2", ry: "2" }),
+                    React.createElement('line', { x1: "16", y1: "2", x2: "16", y2: "6" }),
+                    React.createElement('line', { x1: "8", y1: "2", x2: "8", y2: "6" }),
+                    React.createElement('line', { x1: "3", y1: "10", x2: "21", y2: "10" })
+                ),
+                sparkles: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "M12 3v1m0 16v1M4 12H3m18 0h-1M18.364 5.636l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z" })
+                ),
+                'arrow-right': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('line', { x1: "5", y1: "12", x2: "19", y2: "12" }),
+                    React.createElement('polyline', { points: "12 5 19 12 12 19" })
+                ),
+                plus: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('line', { x1: "12", y1: "5", x2: "12", y2: "19" }),
+                    React.createElement('line', { x1: "5", y1: "12", x2: "19", y2: "12" })
+                ),
+                trash: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('polyline', { points: "3 6 5 6 21 6" }),
+                    React.createElement('path', { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }),
+                    React.createElement('line', { x1: "10", y1: "11", x2: "10", y2: "17" }),
+                    React.createElement('line', { x1: "14", y1: "11", x2: "14", y2: "17" })
+                ),
+                'alert-triangle': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4m0 4h.01" })
+                ),
+                check: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('polyline', { points: "20 6 9 17 4 12" })
+                ),
+                bell: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9Zm-4.27 13a2 2 0 0 1-3.46 0" })
+                ),
+                'bell-off': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "M13.73 21a2 2 0 0 1-3.46 0m5.12-7.85A5.96 5.96 0 0 0 18 8c0-2-.72-3.83-1.9-5.2M3 3l18 18" })
+                ),
+                'rotate-ccw': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "M1 4v6h6M2.05 13.5a9 9 0 1 1 .55-5.5L1 10" })
+                ),
+                search: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('circle', { cx: "11", cy: "11", r: "8" }),
+                    React.createElement('line', { x1: "21", y1: "21", x2: "16.65", y2: "16.65" })
+                ),
+                x: React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('line', { x1: "18", y1: "6", x2: "6", y2: "18" }),
+                    React.createElement('line', { x1: "6", y1: "6", x2: "18", y2: "18" })
+                ),
+                'chevron-right': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('polyline', { points: "9 18 15 12 9 6" })
+                ),
+                'thumbs-up': React.createElement('svg', { className, fill: "none", stroke: "currentColor", strokeWidth, viewBox: "0 0 24 24" },
+                    React.createElement('path', { d: "M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" })
+                ),
+            };
+            return icons[name] || null;
+        }
+
+        // ============================================================
+        // COMPONENTE ONBOARDING (JavaScript Puro)
         // ============================================================
         function Onboarding({ onComplete }) {
-            const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-            const [incomeSources, setIncomeSources] = useState(DEFAULT_INCOME_SOURCES);
-            const [loadDemoData, setLoadDemoData] = useState(false);
-            const [activeSetupTab, setActiveSetupTab] = useState('expenses');
-            
-            const [newCatName, setNewCatName] = useState('');
-            const [newCatLimit, setNewCatLimit] = useState(500);
-            const [newCatColor, setNewCatColor] = useState('bg-[#ECF5FC] text-sky-800 border-sky-200/60');
-            
-            const [newSrcName, setNewSrcName] = useState('');
-            const [newSrcExpected, setNewSrcExpected] = useState(1000);
-            const [newSrcColor, setNewSrcColor] = useState('bg-[#EAF7EE] text-emerald-800 border-emerald-200/60');
+            const [categories, setCategories] = React.useState(DEFAULT_CATEGORIES);
+            const [incomeSources, setIncomeSources] = React.useState(DEFAULT_INCOME_SOURCES);
+            const [loadDemo, setLoadDemo] = React.useState(false);
+            const [activeTab, setActiveTab] = React.useState('expenses');
+            const [newCatName, setNewCatName] = React.useState('');
+            const [newCatLimit, setNewCatLimit] = React.useState(500);
+            const [newCatColor, setNewCatColor] = React.useState('bg-[#ECF5FC] text-sky-800 border-sky-200/60');
+            const [newSrcName, setNewSrcName] = React.useState('');
+            const [newSrcExpected, setNewSrcExpected] = React.useState(1000);
+            const [newSrcColor, setNewSrcColor] = React.useState('bg-[#EAF7EE] text-emerald-800 border-emerald-200/60');
 
-            const pastelColorOptions = [
+            const pastelColors = [
                 { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
                 { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
                 { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
                 { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
             ];
 
-            const handleAddCategory = (e) => {
+            const addCategory = (e) => {
                 e.preventDefault();
                 if (!newCatName.trim()) return;
                 setCategories([...categories, {
@@ -215,7 +237,7 @@
                 setNewCatLimit(500);
             };
 
-            const handleAddSource = (e) => {
+            const addSource = (e) => {
                 e.preventDefault();
                 if (!newSrcName.trim()) return;
                 setIncomeSources([...incomeSources, {
@@ -231,626 +253,196 @@
             const removeCategory = (id) => setCategories(categories.filter(c => c.id !== id));
             const removeSource = (id) => setIncomeSources(incomeSources.filter(s => s.id !== id));
 
-            return (
-                <div className="min-h-screen bg-[#FAF9F6] py-12 px-6 flex flex-col justify-between items-center animate-fade-in">
-                    <div className="w-full max-w-4xl mx-auto text-center mt-4 mb-8">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]/40 text-xs font-semibold mb-4">
-                            <Icon name="sparkles" className="w-3.5 h-3.5" />
-                            Configurar Primeiro Acesso
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#1A1A1A] mb-4">
-                            Bem-vindo ao seu App de Finanças!
-                        </h1>
-                        <p className="text-base md:text-lg text-[#636E72] max-w-2xl mx-auto leading-relaxed">
-                            Vamos planejar e organizar suas despesas para você entender exatamente <strong>de onde sai o seu dinheiro</strong>.
-                        </p>
-                    </div>
+            return React.createElement('div', { className: "min-h-screen bg-[#FAF9F6] py-12 px-6 flex flex-col items-center animate-fade-in" },
+                // Header
+                React.createElement('div', { className: "w-full max-w-4xl text-center mb-8" },
+                    React.createElement('div', { className: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]/40 text-xs font-semibold mb-4" },
+                        React.createElement(Icon, { name: "sparkles", className: "w-3.5 h-3.5" }),
+                        "Configurar Primeiro Acesso"
+                    ),
+                    React.createElement('h1', { className: "text-4xl md:text-5xl font-extrabold text-[#1A1A1A] mb-4" },
+                        "Bem-vindo ao seu App de Finanças!"
+                    ),
+                    React.createElement('p', { className: "text-base md:text-lg text-[#636E72] max-w-2xl mx-auto" },
+                        "Vamos planejar e organizar suas despesas para você entender exatamente ",
+                        React.createElement('strong', null, "de onde sai o seu dinheiro"),
+                        "."
+                    )
+                ),
 
-                    <div className="w-full max-w-4xl mx-auto mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-[#F3E8FF] rounded-[30px] p-6 border-2 border-[#D8B4FE] flex flex-col justify-between min-h-[120px]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-purple-600 shadow-sm">
-                                        <Icon name="clock" className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-[#5B21B6]">Receber Pendente</h3>
-                                </div>
-                                <p className="text-3xl font-extrabold text-[#4C1D95]">R$ 0,00</p>
-                            </div>
-                            <div className="bg-[#DCFCE7] rounded-[30px] p-6 border-2 border-[#86EFAC] flex flex-col justify-between min-h-[120px]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm">
-                                        <Icon name="trending-up" className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-[#166534]">Receita</h3>
-                                </div>
-                                <p className="text-3xl font-extrabold text-[#064E3B]">R$ 0,00</p>
-                            </div>
-                            <div className="bg-[#FFEDD5] rounded-[30px] p-6 border-2 border-[#FDBA74] flex flex-col justify-between min-h-[120px]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm">
-                                        <Icon name="calendar" className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-[#9A3412]">A Receber</h3>
-                                </div>
-                                <p className="text-3xl font-extrabold text-[#7C2D12]">R$ 0,00</p>
-                            </div>
-                            <div className="bg-[#E0F2FE] rounded-[30px] p-6 border-2 border-[#7DD3FC] flex flex-col justify-between min-h-[120px]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-sky-600 shadow-sm">
-                                        <Icon name="trending-down" className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-[#075985]">Gastos</h3>
-                                </div>
-                                <p className="text-3xl font-extrabold text-[#0C4A6E]">R$ 0,00</p>
-                            </div>
-                        </div>
-                    </div>
+                // Bento Grid Zerado
+                React.createElement('div', { className: "w-full max-w-4xl mb-8" },
+                    React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                        // Pending
+                        React.createElement('div', { className: "bg-[#F3E8FF] rounded-[30px] p-6 border-2 border-[#D8B4FE] min-h-[120px]" },
+                            React.createElement('div', { className: "flex items-center gap-3 mb-4" },
+                                React.createElement('div', { className: "w-12 h-12 bg-white rounded-xl flex items-center justify-center text-purple-600" },
+                                    React.createElement(Icon, { name: "clock", className: "w-6 h-6" })
+                                ),
+                                React.createElement('h3', { className: "text-lg font-bold text-[#5B21B6]" }, "Receber Pendente")
+                            ),
+                            React.createElement('p', { className: "text-3xl font-extrabold text-[#4C1D95]" }, "R$ 0,00")
+                        ),
+                        // Revenue
+                        React.createElement('div', { className: "bg-[#DCFCE7] rounded-[30px] p-6 border-2 border-[#86EFAC] min-h-[120px]" },
+                            React.createElement('div', { className: "flex items-center gap-3 mb-4" },
+                                React.createElement('div', { className: "w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600" },
+                                    React.createElement(Icon, { name: "trending-up", className: "w-6 h-6" })
+                                ),
+                                React.createElement('h3', { className: "text-lg font-bold text-[#166534]" }, "Receita")
+                            ),
+                            React.createElement('p', { className: "text-3xl font-extrabold text-[#064E3B]" }, "R$ 0,00")
+                        ),
+                        // Receivables
+                        React.createElement('div', { className: "bg-[#FFEDD5] rounded-[30px] p-6 border-2 border-[#FDBA74] min-h-[120px]" },
+                            React.createElement('div', { className: "flex items-center gap-3 mb-4" },
+                                React.createElement('div', { className: "w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600" },
+                                    React.createElement(Icon, { name: "calendar", className: "w-6 h-6" })
+                                ),
+                                React.createElement('h3', { className: "text-lg font-bold text-[#9A3412]" }, "A Receber")
+                            ),
+                            React.createElement('p', { className: "text-3xl font-extrabold text-[#7C2D12]" }, "R$ 0,00")
+                        ),
+                        // Expenses
+                        React.createElement('div', { className: "bg-[#E0F2FE] rounded-[30px] p-6 border-2 border-[#7DD3FC] min-h-[120px]" },
+                            React.createElement('div', { className: "flex items-center gap-3 mb-4" },
+                                React.createElement('div', { className: "w-12 h-12 bg-white rounded-xl flex items-center justify-center text-sky-600" },
+                                    React.createElement(Icon, { name: "trending-down", className: "w-6 h-6" })
+                                ),
+                                React.createElement('h3', { className: "text-lg font-bold text-[#075985]" }, "Gastos")
+                            ),
+                            React.createElement('p', { className: "text-3xl font-extrabold text-[#0C4A6E]" }, "R$ 0,00")
+                        )
+                    )
+                ),
 
-                    <div className="w-full max-w-4xl bg-white p-6 sm:p-8 rounded-3xl border border-[#FAF9F6] shadow-sm mb-12">
-                        <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1.5 max-w-sm mx-auto mb-6">
-                            <button onClick={() => setActiveSetupTab('expenses')} className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${activeSetupTab === 'expenses' ? 'bg-[#E0F2FE] text-[#0369A1]' : 'text-[#636E72]'}`}>
-                                Limites das Categorias
-                            </button>
-                            <button onClick={() => setActiveSetupTab('revenue')} className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${activeSetupTab === 'revenue' ? 'bg-[#EAF7EE] text-[#15803D]' : 'text-[#636E72]'}`}>
-                                Fontes de Renda
-                            </button>
-                        </div>
+                // Setup Card
+                React.createElement('div', { className: "w-full max-w-4xl bg-white p-6 rounded-3xl shadow-sm mb-8" },
+                    // Tabs
+                    React.createElement('div', { className: "flex bg-slate-100 p-1.5 rounded-2xl max-w-sm mx-auto mb-6" },
+                        React.createElement('button', {
+                            onClick: () => setActiveTab('expenses'),
+                            className: `flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${activeTab === 'expenses' ? 'bg-[#E0F2FE] text-[#0369A1]' : 'text-[#636E72]'}`
+                        }, "Limites das Categorias"),
+                        React.createElement('button', {
+                            onClick: () => setActiveTab('revenue'),
+                            className: `flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${activeTab === 'revenue' ? 'bg-[#EAF7EE] text-[#15803D]' : 'text-[#636E72]'}`
+                        }, "Fontes de Renda")
+                    ),
 
-                        {activeSetupTab === 'expenses' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {categories.map(cat => (
-                                        <div key={cat.id} className={`flex items-center justify-between p-3.5 border rounded-2xl ${cat.color}`}>
-                                            <div><span className="font-extrabold text-sm">{cat.name}</span><span className="text-[10px] font-semibold opacity-70 block">Teto: {formatCurrency(cat.limit)}</span></div>
-                                            <button onClick={() => removeCategory(cat.id)} className="p-1.5 hover:bg-white/50 rounded-xl text-red-700"><Icon name="trash" className="w-4 h-4" /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <form onSubmit={handleAddCategory} className="bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50 space-y-3">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500">Adicionar Categoria</span>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <input type="text" required placeholder="Ex: Assinaturas" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} className="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1" />
-                                        <input type="number" required placeholder="Limite R$" value={newCatLimit} onChange={(e) => setNewCatLimit(Number(e.target.value))} className="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32" />
-                                        <select value={newCatColor} onChange={(e) => setNewCatColor(e.target.value)} className="bg-white px-3 py-2 text-xs rounded-xl border border-slate-300">
-                                            {pastelColorOptions.map(col => <option key={col.bg} value={col.bg}>{col.name}</option>)}
-                                        </select>
-                                        <button type="submit" className="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1"><Icon name="plus" className="w-4 h-4" /> Incluir</button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
+                    // Tab Content
+                    activeTab === 'expenses' ? 
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+                                categories.map(cat => 
+                                    React.createElement('div', { key: cat.id, className: `flex items-center justify-between p-3.5 border rounded-2xl ${cat.color}` },
+                                        React.createElement('div', null,
+                                            React.createElement('span', { className: "font-extrabold text-sm" }, cat.name),
+                                            React.createElement('span', { className: "text-[10px] font-semibold opacity-70 block" }, `Teto: ${formatCurrency(cat.limit)}`)
+                                        ),
+                                        React.createElement('button', { onClick: () => removeCategory(cat.id), className: "p-1.5 hover:bg-white/50 rounded-xl text-red-700" },
+                                            React.createElement(Icon, { name: "trash", className: "w-4 h-4" })
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement('form', { onSubmit: addCategory, className: "bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50" },
+                                React.createElement('span', { className: "text-[10px] uppercase font-bold text-slate-500 block mb-3" }, "Adicionar Categoria"),
+                                React.createElement('div', { className: "flex flex-col sm:flex-row gap-3" },
+                                    React.createElement('input', { type: "text", required: true, placeholder: "Ex: Assinaturas", value: newCatName, onChange: (e) => setNewCatName(e.target.value), className: "bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1" }),
+                                    React.createElement('input', { type: "number", required: true, placeholder: "Limite R$", value: newCatLimit, onChange: (e) => setNewCatLimit(Number(e.target.value)), className: "bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32" }),
+                                    React.createElement('select', { value: newCatColor, onChange: (e) => setNewCatColor(e.target.value), className: "bg-white px-3 py-2 text-xs rounded-xl border border-slate-300" },
+                                        pastelColors.map(col => React.createElement('option', { key: col.bg, value: col.bg }, col.name))
+                                    ),
+                                    React.createElement('button', { type: "submit", className: "bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1" },
+                                        React.createElement(Icon, { name: "plus", className: "w-4 h-4" }), "Incluir"
+                                    )
+                                )
+                            )
+                        ) :
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+                                incomeSources.map(src => 
+                                    React.createElement('div', { key: src.id, className: `flex items-center justify-between p-3.5 border rounded-2xl ${src.color}` },
+                                        React.createElement('div', null,
+                                            React.createElement('span', { className: "font-extrabold text-sm" }, src.name),
+                                            React.createElement('span', { className: "text-[10px] font-semibold opacity-70 block" }, `Meta: ${formatCurrency(src.expectedAmount)}`)
+                                        ),
+                                        React.createElement('button', { onClick: () => removeSource(src.id), className: "p-1.5 hover:bg-white/50 rounded-xl text-red-700" },
+                                            React.createElement(Icon, { name: "trash", className: "w-4 h-4" })
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement('form', { onSubmit: addSource, className: "bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50" },
+                                React.createElement('span', { className: "text-[10px] uppercase font-bold text-slate-500 block mb-3" }, "Adicionar Fonte de Renda"),
+                                React.createElement('div', { className: "flex flex-col sm:flex-row gap-3" },
+                                    React.createElement('input', { type: "text", required: true, placeholder: "Ex: Trabalho Remoto", value: newSrcName, onChange: (e) => setNewSrcName(e.target.value), className: "bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1" }),
+                                    React.createElement('input', { type: "number", required: true, placeholder: "Meta R$", value: newSrcExpected, onChange: (e) => setNewSrcExpected(Number(e.target.value)), className: "bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32" }),
+                                    React.createElement('select', { value: newSrcColor, onChange: (e) => setNewSrcColor(e.target.value), className: "bg-white px-3 py-2 text-xs rounded-xl border border-slate-300" },
+                                        pastelColors.map(col => React.createElement('option', { key: col.bg, value: col.bg }, col.name))
+                                    ),
+                                    React.createElement('button', { type: "submit", className: "bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1" },
+                                        React.createElement(Icon, { name: "plus", className: "w-4 h-4" }), "Incluir"
+                                    )
+                                )
+                            )
+                        )
+                    ),
 
-                        {activeSetupTab === 'revenue' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {incomeSources.map(src => (
-                                        <div key={src.id} className={`flex items-center justify-between p-3.5 border rounded-2xl ${src.color}`}>
-                                            <div><span className="font-extrabold text-sm">{src.name}</span><span className="text-[10px] font-semibold opacity-70 block">Meta: {formatCurrency(src.expectedAmount)}</span></div>
-                                            <button onClick={() => removeSource(src.id)} className="p-1.5 hover:bg-white/50 rounded-xl text-red-700"><Icon name="trash" className="w-4 h-4" /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <form onSubmit={handleAddSource} className="bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50 space-y-3">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500">Adicionar Fonte de Renda</span>
-                                    <div className="flex flex-col sm:flex-row gap-3">
-                                        <input type="text" required placeholder="Ex: Trabalho Remoto" value={newSrcName} onChange={(e) => setNewSrcName(e.target.value)} className="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1" />
-                                        <input type="number" required placeholder="Meta R$" value={newSrcExpected} onChange={(e) => setNewSrcExpected(Number(e.target.value))} className="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32" />
-                                        <select value={newSrcColor} onChange={(e) => setNewSrcColor(e.target.value)} className="bg-white px-3 py-2 text-xs rounded-xl border border-slate-300">
-                                            {pastelColorOptions.map(col => <option key={col.bg} value={col.bg}>{col.name}</option>)}
-                                        </select>
-                                        <button type="submit" className="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1"><Icon name="plus" className="w-4 h-4" /> Incluir</button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
+                    // Demo checkbox
+                    React.createElement('div', { className: "border-t border-slate-100 pt-5 mt-4 flex flex-col items-center gap-2" },
+                        React.createElement('label', { className: "inline-flex items-center gap-2.5 cursor-pointer" },
+                            React.createElement('input', { type: "checkbox", checked: loadDemo, onChange: (e) => setLoadDemo(e.target.checked), className: "w-4.5 h-4.5 accent-sky-600 rounded" }),
+                            React.createElement('span', { className: "text-xs font-bold text-slate-700" }, "Carregar dados de demonstração")
+                        )
+                    )
+                ),
 
-                        <div className="border-t border-slate-100 pt-5 mt-6 flex flex-col items-center gap-2">
-                            <label className="inline-flex items-center gap-2.5 cursor-pointer">
-                                <input type="checkbox" checked={loadDemoData} onChange={(e) => setLoadDemoData(e.target.checked)} className="w-4.5 h-4.5 accent-sky-600 rounded" />
-                                <span className="text-xs font-bold text-slate-700">Carregar dados de demonstração</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button onClick={() => onComplete({ categories, incomeSources, loadDemo: loadDemoData })} className="bg-[#BAE6FD] hover:bg-[#7DD3FC] text-[#0369A1] text-lg font-bold py-5 px-16 rounded-full border-b-4 border-[#7DD3FC] shadow-lg active:border-b-0 active:translate-y-1 transition-all flex items-center gap-3.5">
-                        <span>Vamos começar!</span>
-                        <Icon name="arrow-right" className="w-5.5 h-5.5 animate-pulse-slow" />
-                    </button>
-                </div>
+                // Botão Começar
+                React.createElement('button', {
+                    onClick: () => onComplete({ categories, incomeSources, loadDemo }),
+                    className: "bg-[#BAE6FD] hover:bg-[#7DD3FC] text-[#0369A1] text-lg font-bold py-5 px-16 rounded-full border-b-4 border-[#7DD3FC] shadow-lg active:border-b-0 active:translate-y-1 transition-all flex items-center gap-3.5"
+                },
+                    React.createElement('span', null, "Vamos começar!"),
+                    React.createElement(Icon, { name: "arrow-right", className: "w-5.5 h-5.5 animate-pulse-slow" })
+                )
             );
         }
 
         // ============================================================
-        // COMPONENTE DASHBOARD (VERSÃO SIMPLIFICADA E FUNCIONAL)
+        // COMPONENTE DASHBOARD (JavaScript Puro - Simplificado)
         // ============================================================
-        function Dashboard({ categories: startingCategories, incomeSources: startingSources, initialPending, initialReceivables, initialTransactions, onReset }) {
-            const [categories, setCategories] = useState(startingCategories);
-            const [incomeSources, setIncomeSources] = useState(startingSources);
-            const [pendingReceipts, setPendingReceipts] = useState(initialPending);
-            const [receivables, setReceivables] = useState(initialReceivables);
-            const [transactions, setTransactions] = useState(initialTransactions);
+        function Dashboard({ categories: startCats, incomeSources: startSources, initialPending, initialReceivables, initialTransactions, onReset }) {
+            const [categories, setCategories] = React.useState(startCats);
+            const [incomeSources, setIncomeSources] = React.useState(startSources);
+            const [pendingReceipts, setPendingReceipts] = React.useState(initialPending);
+            const [receivables, setReceivables] = React.useState(initialReceivables);
+            const [transactions, setTransactions] = React.useState(initialTransactions);
+            const [focused, setFocused] = React.useState('expenses');
+            const [search, setSearch] = React.useState('');
+            const [toast, setToast] = React.useState(null);
+            const [showModal, setShowModal] = React.useState(false);
+            const [txType, setTxType] = React.useState('expense');
+            const [txTitle, setTxTitle] = React.useState('');
+            const [txAmount, setTxAmount] = React.useState('');
+            const [txCategory, setTxCategory] = React.useState('');
+            const [txDate, setTxDate] = React.useState(new Date().toISOString().split('T')[0]);
 
-            const [focusedSection, setFocusedSection] = useState('expenses');
-            const [searchTerm, setSearchTerm] = useState('');
-            const [toastMessage, setToastMessage] = useState(null);
-            const [showAddModal, setShowAddModal] = useState(false);
-            const [txType, setTxType] = useState('expense');
-            const [txTitle, setTxTitle] = useState('');
-            const [txAmount, setTxAmount] = useState('');
-            const [txCategory, setTxCategory] = useState('');
-            const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
+            const [newPendingTitle, setNewPendingTitle] = React.useState('');
+            const [newPendingAmount, setNewPendingAmount] = React.useState('');
+            const [newPendingSource, setNewPendingSource] = React.useState('');
 
-            // Formulários para adicionar
-            const [newPendingTitle, setNewPendingTitle] = useState('');
-            const [newPendingAmount, setNewPendingAmount] = useState('');
-            const [newPendingSource, setNewPendingSource] = useState('');
-
-            const [newReceivableTitle, setNewReceivableTitle] = useState('');
-            const [newReceivableAmount, setNewReceivableAmount] = useState('');
-            const [newReceivableDate, setNewReceivableDate] = useState('');
-            const [newReceivableSource, setNewReceivableSource] = useState('');
+            const [newReceivableTitle, setNewReceivableTitle] = React.useState('');
+            const [newReceivableAmount, setNewReceivableAmount] = React.useState('');
+            const [newReceivableDate, setNewReceivableDate] = React.useState('');
+            const [newReceivableSource, setNewReceivableSource] = React.useState('');
 
             // Salvar no localStorage
-            useEffect(() => {
+            React.useEffect(() => {
                 try {
                     localStorage.setItem('finance_categories', JSON.stringify(categories));
                     localStorage.setItem('finance_income_sources', JSON.stringify(incomeSources));
-                    localStorage.setItem('finance_pending_receipts', JSON.stringify(pendingReceipts));
-                    localStorage.setItem('finance_receivables', JSON.stringify(receivables));
-                    localStorage.setItem('finance_transactions', JSON.stringify(transactions));
-                } catch (e) {}
-            }, [categories, incomeSources, pendingReceipts, receivables, transactions]);
-
-            const triggerToast = (msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(null), 3000);
-            };
-
-            // Métricas
-            const totalPending = useMemo(() => pendingReceipts.reduce((s, i) => s + Number(i.amount), 0), [pendingReceipts]);
-            const totalRevenue = useMemo(() => transactions.filter(t => t.type === 'income').reduce((s, i) => s + Number(i.amount), 0), [transactions]);
-            const totalReceivable = useMemo(() => receivables.filter(r => r.status === 'pending').reduce((s, i) => s + Number(i.amount), 0), [receivables]);
-            const totalExpenses = useMemo(() => transactions.filter(t => t.type === 'expense').reduce((s, i) => s + Number(i.amount), 0), [transactions]);
-
-            const updatedCategories = useMemo(() => {
-                return categories.map(cat => ({
-                    ...cat,
-                    spent: transactions.filter(t => t.type === 'expense' && t.categoryOrSource === cat.name).reduce((s, i) => s + Number(i.amount), 0)
-                }));
-            }, [categories, transactions]);
-
-            const filteredTransactions = useMemo(() => {
-                return transactions.filter(tx => {
-                    const match = tx.title.toLowerCase().includes(searchTerm.toLowerCase()) || tx.categoryOrSource.toLowerCase().includes(searchTerm.toLowerCase());
-                    return match;
-                }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            }, [transactions, searchTerm]);
-
-            // Handlers
-            const handleConfirmPending = (id) => {
-                const pending = pendingReceipts.find(p => p.id === id);
-                if (!pending) return;
-                setPendingReceipts(pendingReceipts.filter(p => p.id !== id));
-                setTransactions([...transactions, {
-                    id: `tx-${Date.now()}`,
-                    type: 'income',
-                    title: `[Confirmado] ${pending.title}`,
-                    amount: pending.amount,
-                    date: new Date().toISOString().split('T')[0],
-                    categoryOrSource: pending.source,
-                }]);
-                triggerToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
-            };
-
-            const handleAddPending = (e) => {
-                e.preventDefault();
-                if (!newPendingTitle.trim() || !newPendingAmount) return;
-                setPendingReceipts([...pendingReceipts, {
-                    id: `p-${Date.now()}`,
-                    title: newPendingTitle.trim(),
-                    amount: Number(newPendingAmount),
-                    source: newPendingSource || incomeSources[0]?.name || 'Outros',
-                    status: 'pending',
-                    date: new Date().toISOString().split('T')[0],
-                }]);
-                setNewPendingTitle('');
-                setNewPendingAmount('');
-                triggerToast('📌 Pendente registrado!');
-            };
-
-            const handleReceiveReceivable = (id) => {
-                const rec = receivables.find(r => r.id === id);
-                if (!rec) return;
-                setReceivables(receivables.map(r => r.id === id ? { ...r, status: 'received' } : r));
-                setTransactions([...transactions, {
-                    id: `tx-${Date.now()}`,
-                    type: 'income',
-                    title: `[Recebido] ${rec.title}`,
-                    amount: rec.amount,
-                    date: new Date().toISOString().split('T')[0],
-                    categoryOrSource: rec.source,
-                }]);
-                triggerToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
-            };
-
-            const handleAddReceivable = (e) => {
-                e.preventDefault();
-                if (!newReceivableTitle.trim() || !newReceivableAmount || !newReceivableDate) return;
-                setReceivables([...receivables, {
-                    id: `r-${Date.now()}`,
-                    title: newReceivableTitle.trim(),
-                    amount: Number(newReceivableAmount),
-                    dueDate: newReceivableDate,
-                    source: newReceivableSource || incomeSources[0]?.name || 'Outros',
-                    reminderActive: true,
-                    status: 'pending',
-                }]);
-                setNewReceivableTitle('');
-                setNewReceivableAmount('');
-                setNewReceivableDate('');
-                triggerToast('📅 Agendamento criado!');
-            };
-
-            const handleCreateTransaction = (e) => {
-                e.preventDefault();
-                if (!txTitle.trim() || !txAmount) return;
-                setTransactions([...transactions, {
-                    id: `tx-${Date.now()}`,
-                    type: txType,
-                    title: txTitle.trim(),
-                    amount: Number(txAmount),
-                    date: txDate,
-                    categoryOrSource: txCategory || (txType === 'expense' ? categories[0]?.name : incomeSources[0]?.name),
-                }]);
-                setShowAddModal(false);
-                setTxTitle('');
-                setTxAmount('');
-                triggerToast(`${txType === 'expense' ? '💸' : '💰'} Lançamento registrado!`);
-            };
-
-            const handleDeleteTransaction = (id) => {
-                setTransactions(transactions.filter(t => t.id !== id));
-                triggerToast('🗑️ Transação removida');
-            };
-
-            const toggleReminder = (id) => {
-                setReceivables(receivables.map(r => r.id === id ? { ...r, reminderActive: !r.reminderActive } : r));
-            };
-
-            return (
-                <div className="min-h-screen bg-[#FAF9F6] animate-fade-in">
-                    {/* Toast */}
-                    {toastMessage && (
-                        <div className="fixed bottom-6 right-6 z-50 bg-[#2D3436] text-[#FAF9F6] rounded-2xl p-4 shadow-2xl border border-slate-700/50 flex items-center gap-3 max-w-sm animate-pop-in">
-                            <div className="p-1 rounded-full bg-emerald-500 text-white"><Icon name="check" className="w-4 h-4" /></div>
-                            <p className="text-xs font-bold">{toastMessage}</p>
-                        </div>
-                    )}
-
-                    {/* Header */}
-                    <header className="bg-white border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-white/95 shadow-2xs">
-                        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-[#D3E8FA] border border-sky-300 flex items-center justify-center text-sky-800">
-                                    <Icon name="sparkles" className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h1 className="text-xl font-extrabold text-[#1A1A1A]">Finanças Pessoais</h1>
-                                    <p className="text-xs text-slate-500">Controle de caixa bento grid</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                                <button onClick={() => { setTxType('expense'); setShowAddModal(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl flex items-center gap-1.5">
-                                    <Icon name="plus" className="w-4 h-4" /> Registrar
-                                </button>
-                                <button onClick={onReset} className="px-3 py-2 text-xs font-bold text-purple-700 bg-[#F5EEFB] border border-purple-200/40 rounded-xl flex items-center gap-1.5">
-                                    <Icon name="rotate-ccw" className="w-3.5 h-3.5" /> Reiniciar
-                                </button>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Main */}
-                    <main className="max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-                        {/* Alertas de excesso */}
-                        {updatedCategories.filter(c => c.spent > c.limit).length > 0 && (
-                            <div className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 flex items-start gap-3.5">
-                                <div className="p-2 bg-rose-100 rounded-xl text-rose-600"><Icon name="alert-triangle" className="w-6 h-6" /></div>
-                                <div>
-                                    <h3 className="font-extrabold text-rose-950 text-sm">⚠️ Orçamento Excedido!</h3>
-                                    <p className="text-xs text-rose-800/90">
-                                        {updatedCategories.filter(c => c.spent > c.limit).map(c => `${c.name}: ${formatCurrency(c.spent)} > ${formatCurrency(c.limit)}`).join(' • ')}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Bento Grid */}
-                        <div>
-                            <div className="flex justify-between mb-4"><span className="text-xs font-bold text-[#636E72]/85 uppercase">Resumo Financeiro</span></div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Pending */}
-                                <div onClick={() => setFocusedSection('pending')} className={`rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${focusedSection === 'pending' ? 'bg-[#F3E8FF] border-[#C084FC] ring-8 ring-[#F3E8FF]/60' : 'bg-[#F3E8FF]/90 border-[#D8B4FE] hover:border-[#C084FC]'}`}>
-                                    <div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-purple-600"><Icon name="clock" className="w-6 h-6" /></div><h3 className="text-lg font-bold text-[#5B21B6]">Receber Pendente</h3></div>
-                                    <p className="text-3xl font-extrabold text-[#4C1D95]">{formatCurrency(totalPending)}</p>
-                                </div>
-
-                                {/* Revenue */}
-                                <div onClick={() => setFocusedSection('revenue')} className={`rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${focusedSection === 'revenue' ? 'bg-[#DCFCE7] border-[#4ADE80] ring-8 ring-[#DCFCE7]/60' : 'bg-[#DCFCE7]/90 border-[#86EFAC] hover:border-[#4ADE80]'}`}>
-                                    <div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600"><Icon name="trending-up" className="w-6 h-6" /></div><h3 className="text-lg font-bold text-[#166534]">Receita</h3></div>
-                                    <p className="text-3xl font-extrabold text-[#064E3B]">{formatCurrency(totalRevenue)}</p>
-                                </div>
-
-                                {/* Receivables */}
-                                <div onClick={() => setFocusedSection('receivables')} className={`rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${focusedSection === 'receivables' ? 'bg-[#FFEDD5] border-[#FB923C] ring-8 ring-[#FFEDD5]/60' : 'bg-[#FFEDD5]/90 border-[#FDBA74] hover:border-[#FB923C]'}`}>
-                                    <div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600"><Icon name="calendar" className="w-6 h-6" /></div><h3 className="text-lg font-bold text-[#9A3412]">A Receber</h3></div>
-                                    <p className="text-3xl font-extrabold text-[#7C2D12]">{formatCurrency(totalReceivable)}</p>
-                                </div>
-
-                                {/* Expenses */}
-                                <div onClick={() => setFocusedSection('expenses')} className={`rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${focusedSection === 'expenses' ? 'bg-[#E0F2FE] border-[#38BDF8] ring-8 ring-[#E0F2FE]/60' : 'bg-[#E0F2FE]/90 border-[#7DD3FC] hover:border-[#38BDF8]'}`}>
-                                    <div className="flex items-center gap-3"><div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-sky-600"><Icon name="trending-down" className="w-6 h-6" /></div><h3 className="text-lg font-bold text-[#075985]">Gastos</h3></div>
-                                    <p className="text-3xl font-extrabold text-[#0C4A6E]">{formatCurrency(totalExpenses)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Seção de detalhes */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-                            <div className="bg-[#FAF9F6] border-b border-slate-200/60 p-4 flex flex-wrap items-center justify-between gap-3">
-                                <div className="flex bg-white p-1 rounded-2xl border border-slate-200/50">
-                                    <button onClick={() => setFocusedSection('expenses')} className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${focusedSection === 'expenses' ? 'bg-[#ECF5FC] text-sky-800' : 'text-[#636E72]'}`}>💸 Gastos</button>
-                                    <button onClick={() => setFocusedSection('revenue')} className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${focusedSection === 'revenue' ? 'bg-[#EAF7EE] text-emerald-800' : 'text-[#636E72]'}`}>📈 Receitas</button>
-                                    <button onClick={() => setFocusedSection('receivables')} className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${focusedSection === 'receivables' ? 'bg-[#FDF1EB] text-amber-800' : 'text-[#636E72]'}`}>📅 A Receber</button>
-                                    <button onClick={() => setFocusedSection('pending')} className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${focusedSection === 'pending' ? 'bg-[#F5EEFB] text-purple-800' : 'text-[#636E72]'}`}>⏳ Pendentes</button>
-                                </div>
-                            </div>
-
-                            <div className="p-6">
-                                {/* GASTOS */}
-                                {focusedSection === 'expenses' && (
-                                    <div>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="text-base font-bold">Histórico de Gastos</h3>
-                                            <div className="relative">
-                                                <Icon name="search" className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                                                <input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 pr-3 py-1.5 text-xs border rounded-xl" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {filteredTransactions.filter(t => t.type === 'expense').length === 0 ? (
-                                                <div className="text-center py-8 text-slate-400 text-sm">Nenhum gasto registrado</div>
-                                            ) : (
-                                                filteredTransactions.filter(t => t.type === 'expense').map(tx => (
-                                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                                        <div><span className="font-bold text-sm">{tx.title}</span><span className="text-xs text-slate-400 ml-2">{tx.categoryOrSource}</span></div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-sm font-bold text-red-600">-{formatCurrency(tx.amount)}</span>
-                                                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-slate-300 hover:text-red-600"><Icon name="trash" className="w-4 h-4" /></button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* RECEITAS */}
-                                {focusedSection === 'revenue' && (
-                                    <div>
-                                        <h3 className="text-base font-bold mb-4">Histórico de Receitas</h3>
-                                        <div className="space-y-2">
-                                            {filteredTransactions.filter(t => t.type === 'income').length === 0 ? (
-                                                <div className="text-center py-8 text-slate-400 text-sm">Nenhuma receita registrada</div>
-                                            ) : (
-                                                filteredTransactions.filter(t => t.type === 'income').map(tx => (
-                                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                                        <div><span className="font-bold text-sm">{tx.title}</span><span className="text-xs text-slate-400 ml-2">{tx.categoryOrSource}</span></div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-sm font-bold text-emerald-600">+{formatCurrency(tx.amount)}</span>
-                                                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-slate-300 hover:text-red-600"><Icon name="trash" className="w-4 h-4" /></button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* A RECEBER */}
-                                {focusedSection === 'receivables' && (
-                                    <div>
-                                        <h3 className="text-base font-bold mb-4">Agendamentos Futuros</h3>
-                                        <div className="space-y-2">
-                                            {receivables.filter(r => r.status === 'pending').length === 0 ? (
-                                                <div className="text-center py-8 text-slate-400 text-sm">Nenhum agendamento</div>
-                                            ) : (
-                                                receivables.filter(r => r.status === 'pending').map(rec => (
-                                                    <div key={rec.id} className="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                                        <div><span className="font-bold text-sm">{rec.title}</span><span className="text-xs text-slate-400 ml-2">Vence: {rec.dueDate}</span></div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-sm font-bold">{formatCurrency(rec.amount)}</span>
-                                                            <button onClick={() => toggleReminder(rec.id)} className="text-amber-500"><Icon name={rec.reminderActive ? 'bell' : 'bell-off'} className="w-4 h-4" /></button>
-                                                            <button onClick={() => handleReceiveReceivable(rec.id)} className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg">Receber</button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <form onSubmit={handleAddReceivable} className="mt-4 bg-slate-50 p-4 rounded-xl space-y-3">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase">Novo Agendamento</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                                <input type="text" required placeholder="Título" value={newReceivableTitle} onChange={(e) => setNewReceivableTitle(e.target.value)} className="px-3 py-2 text-xs border rounded-xl" />
-                                                <input type="number" required placeholder="Valor" value={newReceivableAmount} onChange={(e) => setNewReceivableAmount(e.target.value)} className="px-3 py-2 text-xs border rounded-xl" />
-                                                <input type="date" required value={newReceivableDate} onChange={(e) => setNewReceivableDate(e.target.value)} className="px-3 py-2 text-xs border rounded-xl" />
-                                                <button type="submit" className="bg-[#FDF1EB] text-amber-900 font-bold text-xs py-2 rounded-xl">Agendar</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                )}
-
-                                {/* PENDENTES */}
-                                {focusedSection === 'pending' && (
-                                    <div>
-                                        <h3 className="text-base font-bold mb-4">Pendentes de Confirmação</h3>
-                                        <div className="space-y-2">
-                                            {pendingReceipts.length === 0 ? (
-                                                <div className="text-center py-8 text-slate-400 text-sm">Nenhum pendente</div>
-                                            ) : (
-                                                pendingReceipts.map(pend => (
-                                                    <div key={pend.id} className="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                                        <div><span className="font-bold text-sm">{pend.title}</span><span className="text-xs text-slate-400 ml-2">{pend.source}</span></div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-sm font-bold">{formatCurrency(pend.amount)}</span>
-                                                            <button onClick={() => handleConfirmPending(pend.id)} className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">Confirmar</button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <form onSubmit={handleAddPending} className="mt-4 bg-slate-50 p-4 rounded-xl space-y-3">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase">Novo Pendente</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                                <input type="text" required placeholder="Título" value={newPendingTitle} onChange={(e) => setNewPendingTitle(e.target.value)} className="px-3 py-2 text-xs border rounded-xl" />
-                                                <input type="number" required placeholder="Valor" value={newPendingAmount} onChange={(e) => setNewPendingAmount(e.target.value)} className="px-3 py-2 text-xs border rounded-xl" />
-                                                <select value={newPendingSource} onChange={(e) => setNewPendingSource(e.target.value)} className="px-3 py-2 text-xs border rounded-xl">
-                                                    {incomeSources.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                                                </select>
-                                                <button type="submit" className="bg-[#F5EEFB] text-purple-900 font-bold text-xs py-2 rounded-xl">Registrar</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </main>
-
-                    {/* Modal de Transação Rápida */}
-                    {showAddModal && (
-                        <div className="fixed inset-0 z-50 bg-[#2D3436]/60 backdrop-blur-xs flex items-center justify-center p-4">
-                            <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-pop-in">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-extrabold text-lg">Novo Lançamento</h3>
-                                    <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600"><Icon name="x" className="w-6 h-6" /></button>
-                                </div>
-                                <form onSubmit={handleCreateTransaction}>
-                                    <div className="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-4">
-                                        <button type="button" onClick={() => setTxType('expense')} className={`py-2 text-xs font-bold rounded-lg ${txType === 'expense' ? 'bg-[#ECF5FC] text-sky-800' : 'text-slate-500'}`}>Gasto</button>
-                                        <button type="button" onClick={() => setTxType('income')} className={`py-2 text-xs font-bold rounded-lg ${txType === 'income' ? 'bg-[#EAF7EE] text-emerald-800' : 'text-slate-500'}`}>Receita</button>
-                                    </div>
-                                    <input type="text" required placeholder="Descrição" value={txTitle} onChange={(e) => setTxTitle(e.target.value)} className="w-full px-3 py-2 text-sm border rounded-xl mb-3" />
-                                    <div className="grid grid-cols-2 gap-3 mb-3">
-                                        <input type="number" required placeholder="Valor" value={txAmount} onChange={(e) => setTxAmount(e.target.value)} className="px-3 py-2 text-sm border rounded-xl" />
-                                        <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} className="px-3 py-2 text-sm border rounded-xl" />
-                                    </div>
-                                    <select value={txCategory} onChange={(e) => setTxCategory(e.target.value)} className="w-full px-3 py-2 text-sm border rounded-xl mb-4">
-                                        <option value="">Selecione uma categoria...</option>
-                                        {txType === 'expense' 
-                                            ? updatedCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
-                                            : incomeSources.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                                        }
-                                    </select>
-                                    <button type="submit" className={`w-full py-3 text-white font-bold text-sm rounded-xl ${txType === 'expense' ? 'bg-slate-900' : 'bg-emerald-600'}`}>
-                                        Registrar Lançamento
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    <footer className="bg-white border-t py-6 mt-12 text-center text-xs text-slate-400">
-                        <p>© 2026 Finanças Pessoais • Design Bento Grid</p>
-                    </footer>
-                </div>
-            );
-        }
-
-        // ============================================================
-        // APP PRINCIPAL
-        // ============================================================
-        function App() {
-            const [firstLogin, setFirstLogin] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_first_login') || 'true');
-                } catch { return true; }
-            });
-
-            const [categories, setCategories] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_categories')) || DEFAULT_CATEGORIES;
-                } catch { return DEFAULT_CATEGORIES; }
-            });
-
-            const [incomeSources, setIncomeSources] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_income_sources')) || DEFAULT_INCOME_SOURCES;
-                } catch { return DEFAULT_INCOME_SOURCES; }
-            });
-
-            const [pendingReceipts, setPendingReceipts] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_pending_receipts')) || [];
-                } catch { return []; }
-            });
-
-            const [receivables, setReceivables] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_receivables')) || [];
-                } catch { return []; }
-            });
-
-            const [transactions, setTransactions] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('finance_transactions')) || [];
-                } catch { return []; }
-            });
-
-            const handleOnboardingComplete = (setup) => {
-                setCategories(setup.categories);
-                setIncomeSources(setup.incomeSources);
-                if (setup.loadDemo) {
-                    setTransactions(DEMO_TRANSACTIONS);
-                    setPendingReceipts(INITIAL_PENDING);
-                    setReceivables(INITIAL_RECEIVABLES);
-                }
-                setFirstLogin(false);
-                localStorage.setItem('finance_first_login', 'false');
-            };
-
-            const handleReset = () => {
-                setFirstLogin(true);
-                setCategories(DEFAULT_CATEGORIES);
-                setIncomeSources(DEFAULT_INCOME_SOURCES);
-                setTransactions([]);
-                setPendingReceipts([]);
-                setReceivables([]);
-                localStorage.clear();
-            };
-
-            if (firstLogin) {
-                return <Onboarding onComplete={handleOnboardingComplete} />;
-            }
-
-            return (
-                <Dashboard 
-                    categories={categories}
-                    incomeSources={incomeSources}
-                    initialPending={pendingReceipts}
-                    initialReceivables={receivables}
-                    initialTransactions={transactions}
-                    onReset={handleReset}
-                />
-            );
-        }
-
-        // ============================================================
-        // RENDERIZAÇÃO
-        // ============================================================
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
-                 
-                                           
+        
+                                  
+         
