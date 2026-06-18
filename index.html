@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finanças Bento Grid</title>
+    <title>Finanças Bento Grid • Gestão de Contas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,10 +39,15 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-pulse-slow { animation: pulse 2s ease-in-out infinite; }
+        .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #F3F4F6; }
@@ -59,11 +64,6 @@
         .hidden { display: none !important; }
         .transition-all { transition: all 0.2s ease-in-out; }
         
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-        }
-        
         .bento-card {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: pointer;
@@ -71,17 +71,51 @@
         
         .bento-card.active {
             transform: scale(1.02);
-            ring: 8px;
+        }
+        
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
         }
         
         .modal-overlay {
             background: rgba(45, 52, 54, 0.6);
             backdrop-filter: blur(4px);
         }
+        
+        .negative-balance {
+            color: #DC2626;
+            font-weight: 800;
+        }
+        
+        .positive-balance {
+            color: #059669;
+            font-weight: 800;
+        }
+        
+        .debt-tag {
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        
+        .bank-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <!-- App Container -->
     <div id="app"></div>
 
     <script>
@@ -94,41 +128,39 @@
 
         const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
+        const bankColors = {
+            'NuBank': 'bg-purple-600',
+            'Itaú': 'bg-orange-600',
+            'Bradesco': 'bg-red-600',
+            'Santander': 'bg-red-700',
+            'Caixa': 'bg-blue-600',
+            'Banco do Brasil': 'bg-yellow-700',
+            'Inter': 'bg-orange-500',
+            'C6 Bank': 'bg-black',
+            'Original': 'bg-green-600',
+            'Outro': 'bg-gray-600'
+        };
+
         // ============================================================
         // DADOS PADRÃO
         // ============================================================
+        const DEFAULT_BANKS = [
+            { id: 'b1', name: 'NuBank', balance: 2500, color: 'bg-purple-600', icon: 'N' },
+            { id: 'b2', name: 'Itaú', balance: 1800, color: 'bg-orange-600', icon: 'I' },
+            { id: 'b3', name: 'Caixa', balance: 500, color: 'bg-blue-600', icon: 'C' },
+        ];
+
         const DEFAULT_CATEGORIES = [
-            { id: '1', name: 'Alimentação', limit: 800, spent: 0, color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-            { id: '2', name: 'Transporte', limit: 350, spent: 0, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-            { id: '3', name: 'Lazer', limit: 250, spent: 0, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-            { id: '4', name: 'Moradia', limit: 1500, spent: 0, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
+            { id: 'c1', name: 'Alimentação', limit: 800, spent: 0, color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
+            { id: 'c2', name: 'Transporte', limit: 350, spent: 0, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
+            { id: 'c3', name: 'Lazer', limit: 250, spent: 0, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
+            { id: 'c4', name: 'Moradia', limit: 1500, spent: 0, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
         ];
 
         const DEFAULT_INCOME_SOURCES = [
-            { id: '1', name: 'Salário', expectedAmount: 3000, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-            { id: '2', name: 'Aluguel', expectedAmount: 800, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-            { id: '3', name: 'Clientes / Freelas', expectedAmount: 1200, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-            { id: '4', name: 'Outros', expectedAmount: 500, color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-        ];
-
-        const DEMO_TRANSACTIONS = [
-            { id: 't1', type: 'income', title: 'Salário Junho', amount: 3200, date: '2026-06-05', categoryOrSource: 'Salário' },
-            { id: 't2', type: 'expense', title: 'Supermercado Mensal', amount: 450, date: '2026-06-06', categoryOrSource: 'Alimentação' },
-            { id: 't3', type: 'expense', title: 'Combustível Carro', amount: 150, date: '2026-06-08', categoryOrSource: 'Transporte' },
-            { id: 't4', type: 'expense', title: 'Cinema e Jantar', amount: 120, date: '2026-06-10', categoryOrSource: 'Lazer' },
-            { id: 't5', type: 'expense', title: 'Mensalidade Aluguel', amount: 1400, date: '2026-06-01', categoryOrSource: 'Moradia' },
-            { id: 't6', type: 'income', title: 'Consultoria Desenvolvimento', amount: 850, date: '2026-06-12', categoryOrSource: 'Clientes / Freelas' },
-        ];
-
-        const DEMO_PENDING = [
-            { id: 'p1', title: 'Transferência Pix (Venda notebook)', amount: 1200, source: 'Outros', status: 'processing', date: '2026-06-17' },
-            { id: 'p2', title: 'Reembolso Despesas Viagem', amount: 340, source: 'Salário', status: 'awaiting_approval', date: '2026-06-16' }
-        ];
-
-        const DEMO_RECEIVABLES = [
-            { id: 'r1', title: 'Salário Mensal Principal', amount: 3200, dueDate: '2026-07-05', source: 'Salário', reminderActive: true, status: 'pending' },
-            { id: 'r2', title: 'Aluguel Sublocação Sala', amount: 600, dueDate: '2026-07-10', source: 'Aluguel', reminderActive: false, status: 'pending' },
-            { id: 'r3', title: 'Projeto Design Figma', amount: 1500, dueDate: '2026-07-15', source: 'Clientes / Freelas', reminderActive: true, status: 'pending' }
+            { id: 's1', name: 'Salário', expectedAmount: 3000, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
+            { id: 's2', name: 'Aluguel', expectedAmount: 800, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
+            { id: 's3', name: 'Clientes / Freelas', expectedAmount: 1200, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
         ];
 
         // ============================================================
@@ -136,12 +168,14 @@
         // ============================================================
         let state = {
             firstLogin: true,
+            banks: [],
             categories: [],
             incomeSources: [],
             transactions: [],
             pendingReceipts: [],
             receivables: [],
-            focusedSection: 'expenses',
+            debts: [],
+            focusedSection: 'overview',
             searchTerm: '',
             toast: null,
             showModal: false,
@@ -149,7 +183,18 @@
             modalTitle: '',
             modalAmount: '',
             modalCategory: '',
+            modalBank: '',
             modalDate: new Date().toISOString().split('T')[0],
+            
+            // Forms
+            newBankName: '',
+            newBankBalance: 0,
+            newCatName: '',
+            newCatLimit: 500,
+            newCatColor: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60',
+            newSrcName: '',
+            newSrcExpected: 1000,
+            newSrcColor: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60',
             newPendingTitle: '',
             newPendingAmount: '',
             newPendingSource: '',
@@ -157,37 +202,24 @@
             newReceivableAmount: '',
             newReceivableDate: '',
             newReceivableSource: '',
-            newCatName: '',
-            newCatLimit: 500,
-            newCatColor: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60',
-            newSrcName: '',
-            newSrcExpected: 1000,
-            newSrcColor: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60',
-            activeSetupTab: 'expenses',
-            loadDemo: false,
+            newDebtTitle: '',
+            newDebtAmount: '',
+            newDebtBank: '',
+            newDebtDueDate: '',
+            
+            activeSetupTab: 'banks',
+            loadDemo: true,
         };
-
-        const pastelColors = [
-            { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-            { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-            { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-            { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-        ];
 
         // ============================================================
         // FUNÇÕES DE ESTADO
         // ============================================================
         function loadState() {
             try {
-                const saved = localStorage.getItem('finance_data');
+                const saved = localStorage.getItem('finance_data_v2');
                 if (saved) {
                     const data = JSON.parse(saved);
-                    state.firstLogin = data.firstLogin !== undefined ? data.firstLogin : true;
-                    state.categories = data.categories || DEFAULT_CATEGORIES;
-                    state.incomeSources = data.incomeSources || DEFAULT_INCOME_SOURCES;
-                    state.transactions = data.transactions || [];
-                    state.pendingReceipts = data.pendingReceipts || [];
-                    state.receivables = data.receivables || [];
+                    Object.assign(state, data);
                     return true;
                 }
             } catch (e) {}
@@ -196,14 +228,7 @@
 
         function saveState() {
             try {
-                localStorage.setItem('finance_data', JSON.stringify({
-                    firstLogin: state.firstLogin,
-                    categories: state.categories,
-                    incomeSources: state.incomeSources,
-                    transactions: state.transactions,
-                    pendingReceipts: state.pendingReceipts,
-                    receivables: state.receivables,
-                }));
+                localStorage.setItem('finance_data_v2', JSON.stringify(state));
             } catch (e) {}
         }
 
@@ -213,49 +238,252 @@
             render();
         }
 
-        function showToast(message) {
-            state.toast = message;
+        function showToast(message, type = 'success') {
+            state.toast = { message, type };
             render();
             setTimeout(() => {
                 state.toast = null;
                 render();
-            }, 3000);
+            }, 3500);
         }
 
         // ============================================================
-        // FUNÇÕES DE NEGÓCIO
+        // FUNÇÕES DE NEGÓCIO - BANCOS
         // ============================================================
-        function getMetrics() {
-            const totalPending = state.pendingReceipts.reduce((s, i) => s + Number(i.amount), 0);
-            const totalRevenue = state.transactions.filter(t => t.type === 'income').reduce((s, i) => s + Number(i.amount), 0);
-            const totalReceivable = state.receivables.filter(r => r.status === 'pending').reduce((s, i) => s + Number(i.amount), 0);
-            const totalExpenses = state.transactions.filter(t => t.type === 'expense').reduce((s, i) => s + Number(i.amount), 0);
-            
-            const updatedCategories = state.categories.map(cat => ({
-                ...cat,
-                spent: state.transactions.filter(t => t.type === 'expense' && t.categoryOrSource === cat.name)
-                    .reduce((s, i) => s + Number(i.amount), 0)
-            }));
-            
-            const filteredTransactions = state.transactions.filter(tx => {
-                return tx.title.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
-                       tx.categoryOrSource.toLowerCase().includes(state.searchTerm.toLowerCase());
-            }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            
-            return { totalPending, totalRevenue, totalReceivable, totalExpenses, updatedCategories, filteredTransactions };
+        function getTotalBalance() {
+            return state.banks.reduce((sum, bank) => sum + Number(bank.balance), 0);
         }
 
-        function completeOnboarding() {
-            state.firstLogin = false;
-            if (state.loadDemo) {
-                state.transactions = [...DEMO_TRANSACTIONS];
-                state.pendingReceipts = [...DEMO_PENDING];
-                state.receivables = [...DEMO_RECEIVABLES];
+        function getTotalDebts() {
+            return state.debts.reduce((sum, debt) => sum + Number(debt.amount), 0);
+        }
+
+        function getNetWorth() {
+            return getTotalBalance() - getTotalDebts();
+        }
+
+        function getBankBalance(bankName) {
+            const bank = state.banks.find(b => b.name === bankName);
+            return bank ? Number(bank.balance) : 0;
+        }
+
+        function addBank(e) {
+            e.preventDefault();
+            if (!state.newBankName.trim()) return;
+            const name = state.newBankName.trim();
+            state.banks.push({
+                id: generateId(),
+                name: name,
+                balance: Number(state.newBankBalance) || 0,
+                color: bankColors[name] || 'bg-gray-600',
+                icon: name.charAt(0).toUpperCase(),
+            });
+            state.newBankName = '';
+            state.newBankBalance = 0;
+            showToast(`🏦 Banco ${name} adicionado!`);
+            saveState();
+            render();
+        }
+
+        function removeBank(id) {
+            if (confirm('Remover este banco? Todas as transações vinculadas serão mantidas.')) {
+                state.banks = state.banks.filter(b => b.id !== id);
+                saveState();
+                render();
+            }
+        }
+
+        function transferBetweenBanks(fromBank, toBank, amount) {
+            if (fromBank === toBank) return;
+            const from = state.banks.find(b => b.name === fromBank);
+            const to = state.banks.find(b => b.name === toBank);
+            if (!from || !to) return;
+            
+            const value = Number(amount);
+            if (from.balance < value) {
+                showToast('❌ Saldo insuficiente no banco de origem!', 'error');
+                return;
+            }
+            
+            from.balance -= value;
+            to.balance += value;
+            
+            state.transactions.push({
+                id: generateId(),
+                type: 'transfer',
+                title: `Transferência: ${fromBank} → ${toBank}`,
+                amount: value,
+                date: new Date().toISOString().split('T')[0],
+                fromBank: fromBank,
+                toBank: toBank,
+            });
+            
+            showToast(`🔄 Transferência de ${formatCurrency(value)} realizada!`);
+            saveState();
+            render();
+        }
+
+        // ============================================================
+        // FUNÇÕES DE NEGÓCIO - TRANSAÇÕES
+        // ============================================================
+        function createTransaction(e) {
+            e.preventDefault();
+            if (!state.modalTitle.trim() || !state.modalAmount) return;
+            
+            const amount = Number(state.modalAmount);
+            const bankName = state.modalBank || state.banks[0]?.name;
+            
+            // Verificar saldo para gastos
+            if (state.modalType === 'expense') {
+                const bank = state.banks.find(b => b.name === bankName);
+                if (!bank) {
+                    showToast('❌ Banco não encontrado!', 'error');
+                    return;
+                }
+                
+                // Se o saldo ficar negativo, registrar como dívida
+                if (bank.balance < amount) {
+                    const debtAmount = amount - bank.balance;
+                    const debtTitle = `Dívida: ${state.modalTitle}`;
+                    
+                    state.debts.push({
+                        id: generateId(),
+                        title: debtTitle,
+                        amount: debtAmount,
+                        bank: bankName,
+                        dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                        createdAt: new Date().toISOString().split('T')[0],
+                        status: 'pending',
+                    });
+                    
+                    bank.balance = 0;
+                    showToast(`⚠️ Saldo insuficiente! Dívida de ${formatCurrency(debtAmount)} registrada.`, 'error');
+                } else {
+                    bank.balance -= amount;
+                }
+            } else {
+                // Income
+                const bank = state.banks.find(b => b.name === bankName);
+                if (bank) {
+                    bank.balance += amount;
+                }
+            }
+            
+            state.transactions.push({
+                id: generateId(),
+                type: state.modalType,
+                title: state.modalTitle.trim(),
+                amount: amount,
+                date: state.modalDate,
+                categoryOrSource: state.modalCategory || (state.modalType === 'expense' ? state.categories[0]?.name : state.incomeSources[0]?.name),
+                bank: bankName,
+            });
+            
+            state.showModal = false;
+            state.modalTitle = '';
+            state.modalAmount = '';
+            state.modalCategory = '';
+            
+            showToast(`${state.modalType === 'expense' ? '💸' : '💰'} Lançamento registrado!`);
+            saveState();
+            render();
+        }
+
+        function deleteTransaction(id) {
+            const tx = state.transactions.find(t => t.id === id);
+            if (tx) {
+                // Reverter saldo do banco
+                const bank = state.banks.find(b => b.name === tx.bank);
+                if (bank) {
+                    if (tx.type === 'expense') {
+                        bank.balance += Number(tx.amount);
+                    } else if (tx.type === 'income') {
+                        bank.balance -= Number(tx.amount);
+                    }
+                }
+            }
+            state.transactions = state.transactions.filter(t => t.id !== id);
+            showToast('🗑️ Transação removida e saldo restaurado');
+            saveState();
+            render();
+        }
+
+        function payDebt(id) {
+            const debt = state.debts.find(d => d.id === id);
+            if (!debt) return;
+            
+            const bank = state.banks.find(b => b.name === debt.bank);
+            if (bank) {
+                if (bank.balance >= debt.amount) {
+                    bank.balance -= debt.amount;
+                    state.debts = state.debts.filter(d => d.id !== id);
+                    showToast(`✅ Dívida de ${formatCurrency(debt.amount)} paga!`);
+                } else {
+                    showToast(`❌ Saldo insuficiente no ${debt.bank} para pagar a dívida.`, 'error');
+                }
             }
             saveState();
             render();
         }
 
+        // ============================================================
+        // FUNÇÕES DE NEGÓCIO - PENDENTES E RECEBÍVEIS
+        // ============================================================
+        function confirmPending(id) {
+            const pending = state.pendingReceipts.find(p => p.id === id);
+            if (!pending) return;
+            
+            state.pendingReceipts = state.pendingReceipts.filter(p => p.id !== id);
+            
+            const bank = state.banks.find(b => b.name === pending.source);
+            if (bank) {
+                bank.balance += Number(pending.amount);
+            }
+            
+            state.transactions.push({
+                id: generateId(),
+                type: 'income',
+                title: `[Confirmado] ${pending.title}`,
+                amount: pending.amount,
+                date: new Date().toISOString().split('T')[0],
+                categoryOrSource: pending.source,
+                bank: pending.source,
+            });
+            
+            showToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
+            saveState();
+            render();
+        }
+
+        function receiveReceivable(id) {
+            const rec = state.receivables.find(r => r.id === id);
+            if (!rec) return;
+            
+            state.receivables = state.receivables.map(r => r.id === id ? { ...r, status: 'received' } : r);
+            
+            const bank = state.banks.find(b => b.name === rec.source);
+            if (bank) {
+                bank.balance += Number(rec.amount);
+            }
+            
+            state.transactions.push({
+                id: generateId(),
+                type: 'income',
+                title: `[Recebido] ${rec.title}`,
+                amount: rec.amount,
+                date: new Date().toISOString().split('T')[0],
+                categoryOrSource: rec.source,
+                bank: rec.source,
+            });
+            
+            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
+            saveState();
+            render();
+        }
+
+        // ============================================================
+        // FUNÇÕES DE NEGÓCIO - CATEGORIAS E FONTES
+        // ============================================================
         function addCategory(e) {
             e.preventDefault();
             if (!state.newCatName.trim()) return;
@@ -299,50 +527,6 @@
             render();
         }
 
-        function createTransaction(e) {
-            e.preventDefault();
-            if (!state.modalTitle.trim() || !state.modalAmount) return;
-            state.transactions.push({
-                id: generateId(),
-                type: state.modalType,
-                title: state.modalTitle.trim(),
-                amount: Number(state.modalAmount),
-                date: state.modalDate,
-                categoryOrSource: state.modalCategory || (state.modalType === 'expense' ? state.categories[0]?.name : state.incomeSources[0]?.name),
-            });
-            state.showModal = false;
-            state.modalTitle = '';
-            state.modalAmount = '';
-            state.modalCategory = '';
-            showToast(`${state.modalType === 'expense' ? '💸' : '💰'} Lançamento registrado!`);
-            saveState();
-            render();
-        }
-
-        function deleteTransaction(id) {
-            state.transactions = state.transactions.filter(t => t.id !== id);
-            showToast('🗑️ Transação removida');
-            saveState();
-            render();
-        }
-
-        function confirmPending(id) {
-            const pending = state.pendingReceipts.find(p => p.id === id);
-            if (!pending) return;
-            state.pendingReceipts = state.pendingReceipts.filter(p => p.id !== id);
-            state.transactions.push({
-                id: generateId(),
-                type: 'income',
-                title: `[Confirmado] ${pending.title}`,
-                amount: pending.amount,
-                date: new Date().toISOString().split('T')[0],
-                categoryOrSource: pending.source,
-            });
-            showToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
-            saveState();
-            render();
-        }
-
         function addPending(e) {
             e.preventDefault();
             if (!state.newPendingTitle.trim() || !state.newPendingAmount) return;
@@ -357,23 +541,6 @@
             state.newPendingTitle = '';
             state.newPendingAmount = '';
             showToast('📌 Pendente registrado!');
-            saveState();
-            render();
-        }
-
-        function receiveReceivable(id) {
-            const rec = state.receivables.find(r => r.id === id);
-            if (!rec) return;
-            state.receivables = state.receivables.map(r => r.id === id ? { ...r, status: 'received' } : r);
-            state.transactions.push({
-                id: generateId(),
-                type: 'income',
-                title: `[Recebido] ${rec.title}`,
-                amount: rec.amount,
-                date: new Date().toISOString().split('T')[0],
-                categoryOrSource: rec.source,
-            });
-            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
             saveState();
             render();
         }
@@ -406,234 +573,264 @@
             render();
         }
 
-        function resetApp() {
-            if (confirm('Tem certeza que deseja reiniciar todos os dados?')) {
-                localStorage.clear();
-                state.firstLogin = true;
-                state.categories = [];
-                state.incomeSources = [];
-                state.transactions = [];
-                state.pendingReceipts = [];
-                state.receivables = [];
-                state.loadDemo = false;
+        // ============================================================
+        // FUNÇÕES DE NEGÓCIO - DÍVIDAS
+        // ============================================================
+        function addDebt(e) {
+            e.preventDefault();
+            if (!state.newDebtTitle.trim() || !state.newDebtAmount) return;
+            
+            state.debts.push({
+                id: generateId(),
+                title: state.newDebtTitle.trim(),
+                amount: Number(state.newDebtAmount),
+                bank: state.newDebtBank || state.banks[0]?.name || 'Outro',
+                dueDate: state.newDebtDueDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                createdAt: new Date().toISOString().split('T')[0],
+                status: 'pending',
+            });
+            
+            state.newDebtTitle = '';
+            state.newDebtAmount = '';
+            state.newDebtDueDate = '';
+            
+            showToast('⚠️ Dívida registrada!');
+            saveState();
+            render();
+        }
+
+        function removeDebt(id) {
+            if (confirm('Remover esta dívida?')) {
+                state.debts = state.debts.filter(d => d.id !== id);
+                saveState();
                 render();
             }
         }
 
         // ============================================================
-        // RENDERIZADOR
+        // FUNÇÃO DE RESET
+        // ============================================================
+        function resetApp() {
+            if (confirm('Tem certeza que deseja reiniciar todos os dados?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // ============================================================
+        // COMPLETAR ONBOARDING
+        // ============================================================
+        function completeOnboarding() {
+            state.firstLogin = false;
+            if (state.loadDemo) {
+                // Adicionar transações demo
+                state.transactions = [
+                    { id: 't1', type: 'income', title: 'Salário Junho', amount: 3200, date: '2026-06-05', categoryOrSource: 'Salário', bank: 'NuBank' },
+                    { id: 't2', type: 'expense', title: 'Supermercado Mensal', amount: 450, date: '2026-06-06', categoryOrSource: 'Alimentação', bank: 'NuBank' },
+                    { id: 't3', type: 'expense', title: 'Combustível Carro', amount: 150, date: '2026-06-08', categoryOrSource: 'Transporte', bank: 'Itaú' },
+                    { id: 't4', type: 'expense', title: 'Cinema e Jantar', amount: 120, date: '2026-06-10', categoryOrSource: 'Lazer', bank: 'NuBank' },
+                    { id: 't5', type: 'expense', title: 'Mensalidade Aluguel', amount: 1400, date: '2026-06-01', categoryOrSource: 'Moradia', bank: 'Itaú' },
+                    { id: 't6', type: 'income', title: 'Consultoria Desenvolvimento', amount: 850, date: '2026-06-12', categoryOrSource: 'Clientes / Freelas', bank: 'Caixa' },
+                    { id: 't7', type: 'expense', title: 'Assinatura Netflix', amount: 45, date: '2026-06-15', categoryOrSource: 'Lazer', bank: 'NuBank' },
+                ];
+                
+                state.pendingReceipts = [
+                    { id: 'p1', title: 'Transferência Pix (Venda notebook)', amount: 1200, source: 'Clientes / Freelas', status: 'processing', date: '2026-06-17' },
+                ];
+                
+                state.receivables = [
+                    { id: 'r1', title: 'Salário Mensal Principal', amount: 3200, dueDate: '2026-07-05', source: 'Salário', reminderActive: true, status: 'pending' },
+                    { id: 'r2', title: 'Projeto Design Figma', amount: 1500, dueDate: '2026-07-15', source: 'Clientes / Freelas', reminderActive: true, status: 'pending' },
+                ];
+            }
+            saveState();
+            render();
+        }
+
+        // ============================================================
+        // RENDERIZADOR PRINCIPAL
         // ============================================================
         function render() {
-            const app = document.getElementById('app');
-            
-            if (state.firstLogin) {
-                app.innerHTML = renderOnboarding();
-            } else {
-                app.innerHTML = renderDashboard();
-            }
-            
-            // Re-aplicar event listeners
-            attachEvents();
+            document.getElementById('app').innerHTML = state.firstLogin ? renderOnboarding() : renderDashboard();
         }
 
         // ============================================================
         // RENDER ONBOARDING
         // ============================================================
         function renderOnboarding() {
-            const categoriesHTML = state.categories.map(cat => `
-                <div class="flex items-center justify-between p-3.5 border rounded-2xl ${cat.color}">
-                    <div>
-                        <span class="font-extrabold text-sm">${cat.name}</span>
-                        <span class="text-[10px] font-semibold opacity-70 block">Teto: ${formatCurrency(cat.limit)}</span>
-                    </div>
-                    <button onclick="removeCategory('${cat.id}')" class="p-1.5 hover:bg-white/50 rounded-xl text-red-700">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            <line x1="10" y1="11" x2="10" y2="17"/>
-                            <line x1="14" y1="11" x2="14" y2="17"/>
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
+            const pastelColors = [
+                { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
+                { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
+                { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
+                { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
+            ];
 
-            const sourcesHTML = state.incomeSources.map(src => `
-                <div class="flex items-center justify-between p-3.5 border rounded-2xl ${src.color}">
-                    <div>
-                        <span class="font-extrabold text-sm">${src.name}</span>
-                        <span class="text-[10px] font-semibold opacity-70 block">Meta: ${formatCurrency(src.expectedAmount)}</span>
-                    </div>
-                    <button onclick="removeSource('${src.id}')" class="p-1.5 hover:bg-white/50 rounded-xl text-red-700">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            <line x1="10" y1="11" x2="10" y2="17"/>
-                            <line x1="14" y1="11" x2="14" y2="17"/>
-                        </svg>
-                    </button>
-                </div>
-            `).join('');
-
-            const colorOptions = pastelColors.map(col => 
-                `<option value="${col.bg}">${col.name}</option>`
-            ).join('');
+            const colorOptions = pastelColors.map(c => `<option value="${c.bg}">${c.name}</option>`).join('');
+            const bankOptions = Object.keys(bankColors).map(b => `<option value="${b}">${b}</option>`).join('');
 
             return `
-                <div class="min-h-screen bg-[#FAF9F6] py-12 px-6 flex flex-col items-center animate-fade-in">
-                    <!-- Header -->
-                    <div class="w-full max-w-4xl text-center mb-8">
-                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]/40 text-xs font-semibold mb-4">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M12 3v1m0 16v1M4 12H3m18 0h-1M18.364 5.636l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
-                            </svg>
-                            Configurar Primeiro Acesso
-                        </div>
-                        <h1 class="text-4xl md:text-5xl font-extrabold text-[#1A1A1A] mb-4">Bem-vindo ao seu App de Finanças!</h1>
-                        <p class="text-base md:text-lg text-[#636E72] max-w-2xl mx-auto">
-                            Vamos planejar e organizar suas despesas para você entender exatamente <strong>de onde sai o seu dinheiro</strong>.
-                        </p>
-                    </div>
-
-                    <!-- Bento Grid Zerado -->
-                    <div class="w-full max-w-4xl mb-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-[#F3E8FF] rounded-[30px] p-6 border-2 border-[#D8B4FE] min-h-[120px]">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-purple-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="10"/>
-                                            <polyline points="12 6 12 12 16 14"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-[#5B21B6]">Receber Pendente</h3>
-                                </div>
-                                <p class="text-3xl font-extrabold text-[#4C1D95]">R$ 0,00</p>
+                <div class="min-h-screen bg-[#FAF9F6] py-8 px-4 flex flex-col items-center animate-fade-in">
+                    <div class="w-full max-w-5xl">
+                        <!-- Header -->
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]/40 text-xs font-semibold mb-4">
+                                🏦 Configurar Primeiro Acesso
                             </div>
-                            <div class="bg-[#DCFCE7] rounded-[30px] p-6 border-2 border-[#86EFAC] min-h-[120px]">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                                            <polyline points="17 6 23 6 23 12"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-[#166534]">Receita</h3>
-                                </div>
-                                <p class="text-3xl font-extrabold text-[#064E3B]">R$ 0,00</p>
-                            </div>
-                            <div class="bg-[#FFEDD5] rounded-[30px] p-6 border-2 border-[#FDBA74] min-h-[120px]">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                            <line x1="16" y1="2" x2="16" y2="6"/>
-                                            <line x1="8" y1="2" x2="8" y2="6"/>
-                                            <line x1="3" y1="10" x2="21" y2="10"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-[#9A3412]">A Receber</h3>
-                                </div>
-                                <p class="text-3xl font-extrabold text-[#7C2D12]">R$ 0,00</p>
-                            </div>
-                            <div class="bg-[#E0F2FE] rounded-[30px] p-6 border-2 border-[#7DD3FC] min-h-[120px]">
-                                <div class="flex items-center gap-3 mb-4">
-                                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-sky-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-                                            <polyline points="17 18 23 18 23 12"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-[#075985]">Gastos</h3>
-                                </div>
-                                <p class="text-3xl font-extrabold text-[#0C4A6E]">R$ 0,00</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Setup Card -->
-                    <div class="w-full max-w-4xl bg-white p-6 rounded-3xl shadow-sm mb-8">
-                        <!-- Tabs -->
-                        <div class="flex bg-slate-100 p-1.5 rounded-2xl max-w-sm mx-auto mb-6">
-                            <button onclick="state.activeSetupTab='expenses';render()" 
-                                    class="flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${state.activeSetupTab === 'expenses' ? 'bg-[#E0F2FE] text-[#0369A1]' : 'text-[#636E72]'}">
-                                Limites das Categorias
-                            </button>
-                            <button onclick="state.activeSetupTab='revenue';render()" 
-                                    class="flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${state.activeSetupTab === 'revenue' ? 'bg-[#EAF7EE] text-[#15803D]' : 'text-[#636E72]'}">
-                                Fontes de Renda
-                            </button>
+                            <h1 class="text-3xl md:text-4xl font-extrabold text-[#1A1A1A] mb-3">
+                                Bem-vindo ao seu App de Finanças!
+                            </h1>
+                            <p class="text-sm md:text-base text-[#636E72] max-w-2xl mx-auto">
+                                Configure suas contas bancárias, categorias e fontes de renda.
+                            </p>
                         </div>
 
-                        ${state.activeSetupTab === 'expenses' ? `
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${categoriesHTML}</div>
-                                <form onsubmit="addCategory(event)" class="bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50">
-                                    <span class="text-[10px] uppercase font-bold text-slate-500 block mb-3">Adicionar Categoria</span>
-                                    <div class="flex flex-col sm:flex-row gap-3">
-                                        <input type="text" required placeholder="Ex: Assinaturas" value="${state.newCatName}" 
+                        <!-- Setup Tabs -->
+                        <div class="flex flex-wrap gap-2 justify-center mb-6">
+                            ${['banks', 'categories', 'sources'].map(tab => {
+                                const labels = { banks: '🏦 Bancos', categories: '📂 Categorias', sources: '💰 Fontes' };
+                                const active = state.activeSetupTab === tab ? 'bg-[#E0F2FE] text-[#0369A1]' : 'bg-white text-[#636E72]';
+                                return `
+                                    <button onclick="state.activeSetupTab='${tab}';render()" 
+                                            class="px-4 py-2 text-xs font-bold rounded-xl border ${active} transition-all">
+                                        ${labels[tab]}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Conteúdo dos Tabs -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
+                            ${state.activeSetupTab === 'banks' ? `
+                                <div>
+                                    <h3 class="text-sm font-bold mb-4">Contas Bancárias</h3>
+                                    <div class="space-y-2 mb-4">
+                                        ${state.banks.map(bank => `
+                                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="${bank.color} w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                                                        ${bank.icon}
+                                                    </div>
+                                                    <div>
+                                                        <span class="font-bold text-sm">${bank.name}</span>
+                                                        <span class="text-xs text-slate-500 block">Saldo: ${formatCurrency(bank.balance)}</span>
+                                                    </div>
+                                                </div>
+                                                <button onclick="removeBank('${bank.id}')" class="text-red-400 hover:text-red-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <form onsubmit="addBank(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <select onchange="state.newBankName=this.value" class="px-3 py-2 text-sm border rounded-xl">
+                                            <option value="">Selecione um banco...</option>
+                                            ${bankOptions}
+                                        </select>
+                                        <input type="number" placeholder="Saldo inicial" value="${state.newBankBalance}" 
+                                               oninput="state.newBankBalance=Number(this.value)" 
+                                               class="px-3 py-2 text-sm border rounded-xl">
+                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
+                                            + Adicionar Banco
+                                        </button>
+                                    </form>
+                                </div>
+                            ` : ''}
+
+                            ${state.activeSetupTab === 'categories' ? `
+                                <div>
+                                    <h3 class="text-sm font-bold mb-4">Categorias de Gastos</h3>
+                                    <div class="space-y-2 mb-4">
+                                        ${state.categories.map(cat => `
+                                            <div class="flex items-center justify-between p-3 border rounded-xl ${cat.color}">
+                                                <div>
+                                                    <span class="font-bold text-sm">${cat.name}</span>
+                                                    <span class="text-xs opacity-70 block">Limite: ${formatCurrency(cat.limit)}</span>
+                                                </div>
+                                                <button onclick="removeCategory('${cat.id}')" class="text-red-400 hover:text-red-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <form onsubmit="addCategory(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                        <input type="text" required placeholder="Nome" value="${state.newCatName}" 
                                                oninput="state.newCatName=this.value" 
-                                               class="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1">
+                                               class="px-3 py-2 text-sm border rounded-xl">
                                         <input type="number" required placeholder="Limite R$" value="${state.newCatLimit}" 
                                                oninput="state.newCatLimit=Number(this.value)" 
-                                               class="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32">
-                                        <select onchange="state.newCatColor=this.value" class="bg-white px-3 py-2 text-xs rounded-xl border border-slate-300">
+                                               class="px-3 py-2 text-sm border rounded-xl">
+                                        <select onchange="state.newCatColor=this.value" class="px-3 py-2 text-sm border rounded-xl">
                                             ${colorOptions}
                                         </select>
-                                        <button type="submit" class="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                                <line x1="5" y1="12" x2="19" y2="12"/>
-                                            </svg>
-                                            Incluir
+                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
+                                            + Adicionar
                                         </button>
+                                    </form>
+                                </div>
+                            ` : ''}
+
+                            ${state.activeSetupTab === 'sources' ? `
+                                <div>
+                                    <h3 class="text-sm font-bold mb-4">Fontes de Renda</h3>
+                                    <div class="space-y-2 mb-4">
+                                        ${state.incomeSources.map(src => `
+                                            <div class="flex items-center justify-between p-3 border rounded-xl ${src.color}">
+                                                <div>
+                                                    <span class="font-bold text-sm">${src.name}</span>
+                                                    <span class="text-xs opacity-70 block">Meta: ${formatCurrency(src.expectedAmount)}</span>
+                                                </div>
+                                                <button onclick="removeSource('${src.id}')" class="text-red-400 hover:text-red-600">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        `).join('')}
                                     </div>
-                                </form>
-                            </div>
-                        ` : `
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${sourcesHTML}</div>
-                                <form onsubmit="addSource(event)" class="bg-[#FAF9F6] p-4 rounded-3xl border border-slate-200/50">
-                                    <span class="text-[10px] uppercase font-bold text-slate-500 block mb-3">Adicionar Fonte de Renda</span>
-                                    <div class="flex flex-col sm:flex-row gap-3">
-                                        <input type="text" required placeholder="Ex: Trabalho Remoto" value="${state.newSrcName}" 
+                                    <form onsubmit="addSource(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                        <input type="text" required placeholder="Nome" value="${state.newSrcName}" 
                                                oninput="state.newSrcName=this.value" 
-                                               class="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 flex-1">
+                                               class="px-3 py-2 text-sm border rounded-xl">
                                         <input type="number" required placeholder="Meta R$" value="${state.newSrcExpected}" 
                                                oninput="state.newSrcExpected=Number(this.value)" 
-                                               class="bg-white px-3.5 py-2 text-xs rounded-xl border border-slate-300 w-32">
-                                        <select onchange="state.newSrcColor=this.value" class="bg-white px-3 py-2 text-xs rounded-xl border border-slate-300">
+                                               class="px-3 py-2 text-sm border rounded-xl">
+                                        <select onchange="state.newSrcColor=this.value" class="px-3 py-2 text-sm border rounded-xl">
                                             ${colorOptions}
                                         </select>
-                                        <button type="submit" class="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-800 flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                                <line x1="5" y1="12" x2="19" y2="12"/>
-                                            </svg>
-                                            Incluir
+                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
+                                            + Adicionar
                                         </button>
-                                    </div>
-                                </form>
-                            </div>
-                        `}
+                                    </form>
+                                </div>
+                            ` : ''}
+                        </div>
 
                         <!-- Demo checkbox -->
-                        <div class="border-t border-slate-100 pt-5 mt-4 flex flex-col items-center gap-2">
+                        <div class="flex flex-col items-center gap-3 mb-8">
                             <label class="inline-flex items-center gap-2.5 cursor-pointer">
-                                <input type="checkbox" ${state.loadDemo ? 'checked' : ''} onchange="state.loadDemo=this.checked" class="w-4.5 h-4.5 accent-sky-600 rounded">
+                                <input type="checkbox" ${state.loadDemo ? 'checked' : ''} 
+                                       onchange="state.loadDemo=this.checked" 
+                                       class="w-4.5 h-4.5 accent-sky-600 rounded">
                                 <span class="text-xs font-bold text-slate-700">Carregar dados de demonstração</span>
                             </label>
+                            <p class="text-[10px] text-slate-400">
+                                Inclui bancos, transações e agendamentos de exemplo
+                            </p>
                         </div>
-                    </div>
 
-                    <!-- Botão Começar -->
-                    <button onclick="completeOnboarding()" 
-                            class="bg-[#BAE6FD] hover:bg-[#7DD3FC] text-[#0369A1] text-lg font-bold py-5 px-16 rounded-full border-b-4 border-[#7DD3FC] shadow-lg active:border-b-0 active:translate-y-1 transition-all flex items-center gap-3.5">
-                        <span>Vamos começar!</span>
-                        <svg class="w-5.5 h-5.5 animate-pulse-slow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                            <polyline points="12 5 19 12 12 19"/>
-                        </svg>
-                    </button>
+                        <!-- Botão Iniciar -->
+                        <button onclick="completeOnboarding()" 
+                                class="w-full sm:w-auto bg-[#BAE6FD] hover:bg-[#7DD3FC] text-[#0369A1] text-lg font-bold py-4 px-12 rounded-full border-b-4 border-[#7DD3FC] shadow-lg active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-3 mx-auto">
+                            <span>🚀 Começar a Usar!</span>
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -642,190 +839,41 @@
         // RENDER DASHBOARD
         // ============================================================
         function renderDashboard() {
-            const metrics = getMetrics();
-            const { totalPending, totalRevenue, totalReceivable, totalExpenses, updatedCategories, filteredTransactions } = metrics;
-
-            const hasOverBudget = updatedCategories.some(c => c.spent > c.limit);
-
-            // Renderizar seção focada
-            let sectionHTML = '';
+            const totalBalance = getTotalBalance();
+            const totalDebts = getTotalDebts();
+            const netWorth = getNetWorth();
             
-            if (state.focusedSection === 'expenses') {
-                const expenses = filteredTransactions.filter(t => t.type === 'expense');
-                sectionHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-bold">Histórico de Gastos</h3>
-                            <div class="relative">
-                                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                    <circle cx="11" cy="11" r="8"/>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                                </svg>
-                                <input type="text" placeholder="Buscar..." value="${state.searchTerm}" 
-                                       oninput="state.searchTerm=this.value;render()" 
-                                       class="pl-9 pr-3 py-1.5 text-xs border rounded-xl">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            ${expenses.length === 0 ? 
-                                '<div class="text-center py-8 text-slate-400 text-sm">Nenhum gasto registrado</div>' :
-                                expenses.map(tx => `
-                                    <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                        <div>
-                                            <span class="font-bold text-sm">${tx.title}</span>
-                                            <span class="text-xs text-slate-400 ml-2">${tx.categoryOrSource}</span>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold text-red-600">-${formatCurrency(tx.amount)}</span>
-                                            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-300 hover:text-red-600">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                    <polyline points="3 6 5 6 21 6"/>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                                    <line x1="10" y1="11" x2="10" y2="17"/>
-                                                    <line x1="14" y1="11" x2="14" y2="17"/>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-                    </div>
-                `;
-            } else if (state.focusedSection === 'revenue') {
-                const revenues = filteredTransactions.filter(t => t.type === 'income');
-                sectionHTML = `
-                    <div>
-                        <h3 class="text-base font-bold mb-4">Histórico de Receitas</h3>
-                        <div class="space-y-2">
-                            ${revenues.length === 0 ? 
-                                '<div class="text-center py-8 text-slate-400 text-sm">Nenhuma receita registrada</div>' :
-                                revenues.map(tx => `
-                                    <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                        <div>
-                                            <span class="font-bold text-sm">${tx.title}</span>
-                                            <span class="text-xs text-slate-400 ml-2">${tx.categoryOrSource}</span>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold text-emerald-600">+${formatCurrency(tx.amount)}</span>
-                                            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-300 hover:text-red-600">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                    <polyline points="3 6 5 6 21 6"/>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                                    <line x1="10" y1="11" x2="10" y2="17"/>
-                                                    <line x1="14" y1="11" x2="14" y2="17"/>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-                    </div>
-                `;
-            } else if (state.focusedSection === 'receivables') {
-                const pendingReceivables = state.receivables.filter(r => r.status === 'pending');
-                sectionHTML = `
-                    <div>
-                        <h3 class="text-base font-bold mb-4">Agendamentos Futuros</h3>
-                        <div class="space-y-2">
-                            ${pendingReceivables.length === 0 ? 
-                                '<div class="text-center py-8 text-slate-400 text-sm">Nenhum agendamento</div>' :
-                                pendingReceivables.map(rec => `
-                                    <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                        <div>
-                                            <span class="font-bold text-sm">${rec.title}</span>
-                                            <span class="text-xs text-slate-400 ml-2">Vence: ${rec.dueDate}</span>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold">${formatCurrency(rec.amount)}</span>
-                                            <button onclick="toggleReminder('${rec.id}')" class="text-amber-500">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                    ${rec.reminderActive ? 
-                                                        '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9Zm-4.27 13a2 2 0 0 1-3.46 0"/>' :
-                                                        '<path d="M13.73 21a2 2 0 0 1-3.46 0m5.12-7.85A5.96 5.96 0 0 0 18 8c0-2-.72-3.83-1.9-5.2M3 3l18 18"/>'
-                                                    }
-                                                </svg>
-                                            </button>
-                                            <button onclick="receiveReceivable('${rec.id}')" class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg">Receber</button>
-                                        </div>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-                        <form onsubmit="addReceivable(event)" class="mt-4 bg-slate-50 p-4 rounded-xl space-y-3">
-                            <h4 class="text-xs font-bold text-slate-500 uppercase">Novo Agendamento</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                <input type="text" required placeholder="Título" value="${state.newReceivableTitle}" 
-                                       oninput="state.newReceivableTitle=this.value" 
-                                       class="px-3 py-2 text-xs border rounded-xl">
-                                <input type="number" required placeholder="Valor" value="${state.newReceivableAmount}" 
-                                       oninput="state.newReceivableAmount=this.value" 
-                                       class="px-3 py-2 text-xs border rounded-xl">
-                                <input type="date" required value="${state.newReceivableDate}" 
-                                       oninput="state.newReceivableDate=this.value" 
-                                       class="px-3 py-2 text-xs border rounded-xl">
-                                <button type="submit" class="bg-[#FDF1EB] text-amber-900 font-bold text-xs py-2 rounded-xl">Agendar</button>
-                            </div>
-                        </form>
-                    </div>
-                `;
-            } else { // pending
-                sectionHTML = `
-                    <div>
-                        <h3 class="text-base font-bold mb-4">Pendentes de Confirmação</h3>
-                        <div class="space-y-2">
-                            ${state.pendingReceipts.length === 0 ? 
-                                '<div class="text-center py-8 text-slate-400 text-sm">Nenhum pendente</div>' :
-                                state.pendingReceipts.map(pend => `
-                                    <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm">
-                                        <div>
-                                            <span class="font-bold text-sm">${pend.title}</span>
-                                            <span class="text-xs text-slate-400 ml-2">${pend.source}</span>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold">${formatCurrency(pend.amount)}</span>
-                                            <button onclick="confirmPending('${pend.id}')" class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">Confirmar</button>
-                                        </div>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-                        <form onsubmit="addPending(event)" class="mt-4 bg-slate-50 p-4 rounded-xl space-y-3">
-                            <h4 class="text-xs font-bold text-slate-500 uppercase">Novo Pendente</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                <input type="text" required placeholder="Título" value="${state.newPendingTitle}" 
-                                       oninput="state.newPendingTitle=this.value" 
-                                       class="px-3 py-2 text-xs border rounded-xl">
-                                <input type="number" required placeholder="Valor" value="${state.newPendingAmount}" 
-                                       oninput="state.newPendingAmount=this.value" 
-                                       class="px-3 py-2 text-xs border rounded-xl">
-                                <select onchange="state.newPendingSource=this.value" class="px-3 py-2 text-xs border rounded-xl">
-                                    ${state.incomeSources.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-                                </select>
-                                <button type="submit" class="bg-[#F5EEFB] text-purple-900 font-bold text-xs py-2 rounded-xl">Registrar</button>
-                            </div>
-                        </form>
-                    </div>
-                `;
-            }
+            const hasDebts = totalDebts > 0;
+            const isNegative = netWorth < 0;
+
+            // Calcular gastos por categoria
+            const categorySpending = state.categories.map(cat => ({
+                ...cat,
+                spent: state.transactions.filter(t => t.type === 'expense' && t.categoryOrSource === cat.name)
+                    .reduce((s, t) => s + Number(t.amount), 0)
+            }));
+
+            const hasOverBudget = categorySpending.some(c => c.spent > c.limit);
 
             // Toast
             const toastHTML = state.toast ? `
                 <div class="fixed bottom-6 right-6 z-50 bg-[#2D3436] text-[#FAF9F6] rounded-2xl p-4 shadow-2xl border border-slate-700/50 flex items-center gap-3 max-w-sm animate-pop-in">
-                    <div class="p-1 rounded-full bg-emerald-500 text-white">
+                    <div class="p-1 rounded-full ${state.toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'} text-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <polyline points="20 6 9 17 4 12"/>
+                            ${state.toast.type === 'error' ? 
+                                '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' :
+                                '<polyline points="20 6 9 17 4 12"/>'
+                            }
                         </svg>
                     </div>
-                    <p class="text-xs font-bold">${state.toast}</p>
+                    <p class="text-xs font-bold">${state.toast.message}</p>
                 </div>
             ` : '';
 
             // Modal
             const modalHTML = state.showModal ? `
                 <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
-                    <div class="bg-white rounded-3xl w-full max-w-sm p-6 animate-pop-in">
+                    <div class="bg-white rounded-3xl w-full max-w-md p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="font-extrabold text-lg">Novo Lançamento</h3>
                             <button onclick="state.showModal=false;render()" class="text-slate-400 hover:text-slate-600">
@@ -839,16 +887,18 @@
                             <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-4">
                                 <button type="button" onclick="state.modalType='expense';render()" 
                                         class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'expense' ? 'bg-[#ECF5FC] text-sky-800' : 'text-slate-500'}">
-                                    Gasto
+                                    💸 Gasto
                                 </button>
                                 <button type="button" onclick="state.modalType='income';render()" 
                                         class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'income' ? 'bg-[#EAF7EE] text-emerald-800' : 'text-slate-500'}">
-                                    Receita
+                                    💰 Receita
                                 </button>
                             </div>
+                            
                             <input type="text" required placeholder="Descrição" value="${state.modalTitle}" 
                                    oninput="state.modalTitle=this.value" 
                                    class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
+                            
                             <div class="grid grid-cols-2 gap-3 mb-3">
                                 <input type="number" required placeholder="Valor" value="${state.modalAmount}" 
                                        oninput="state.modalAmount=this.value" 
@@ -857,13 +907,20 @@
                                        oninput="state.modalDate=this.value" 
                                        class="px-3 py-2 text-sm border rounded-xl">
                             </div>
-                            <select onchange="state.modalCategory=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-4">
+                            
+                            <select onchange="state.modalCategory=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
                                 <option value="">Selecione uma categoria...</option>
-                                ${(state.modalType === 'expense' ? updatedCategories : state.incomeSources).map(item => 
+                                ${(state.modalType === 'expense' ? state.categories : state.incomeSources).map(item => 
                                     `<option value="${item.name}">${item.name}</option>`
                                 ).join('')}
                             </select>
-                            <button type="submit" class="w-full py-3 text-white font-bold text-sm rounded-xl ${state.modalType === 'expense' ? 'bg-slate-900' : 'bg-emerald-600'}">
+                            
+                            <select onchange="state.modalBank=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-4">
+                                <option value="">Selecione um banco...</option>
+                                ${state.banks.map(b => `<option value="${b.name}">${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
+                            </select>
+                            
+                            <button type="submit" class="w-full py-3 text-white font-bold text-sm rounded-xl ${state.modalType === 'expense' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700'} transition-all">
                                 Registrar Lançamento
                             </button>
                         </form>
@@ -871,59 +928,159 @@
                 </div>
             ` : '';
 
+            // Seção de Dívidas
+            const debtsHTML = state.debts.length > 0 ? `
+                <div class="bg-white rounded-3xl border-2 border-red-200 shadow-sm overflow-hidden">
+                    <div class="bg-red-50 border-b border-red-200 p-4">
+                        <h3 class="font-extrabold text-red-800 flex items-center gap-2">
+                            ⚠️ Dívidas Registradas
+                            <span class="debt-tag">${state.debts.length}</span>
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        ${state.debts.map(debt => `
+                            <div class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-xl animate-slide-down">
+                                <div>
+                                    <span class="font-bold text-sm text-red-800">${debt.title}</span>
+                                    <span class="text-xs text-red-600 block">${debt.bank} • Vence: ${debt.dueDate}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-red-600">${formatCurrency(debt.amount)}</span>
+                                    <button onclick="payDebt('${debt.id}')" class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-200 transition-all">
+                                        Pagar
+                                    </button>
+                                    <button onclick="removeDebt('${debt.id}')" class="text-red-300 hover:text-red-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+
+            // Seção de Transferência entre bancos
+            const transferHTML = state.banks.length >= 2 ? `
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">🔄 Transferir entre Bancos</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <select id="transferFrom" class="px-3 py-2 text-sm border rounded-xl">
+                            ${state.banks.map(b => `<option value="${b.name}">${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
+                        </select>
+                        <select id="transferTo" class="px-3 py-2 text-sm border rounded-xl">
+                            ${state.banks.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
+                        </select>
+                        <input type="number" id="transferAmount" placeholder="Valor" class="px-3 py-2 text-sm border rounded-xl">
+                        <button onclick="doTransfer()" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
+                            Transferir
+                        </button>
+                    </div>
+                </div>
+            ` : '';
+
+            // ============================================================
+            // LISTA DE TRANSAÇÕES FILTRADA
+            // ============================================================
+            const filteredTransactions = state.transactions
+                .filter(t => t.title.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                             t.categoryOrSource?.toLowerCase().includes(state.searchTerm.toLowerCase()))
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
             return `
                 <div class="min-h-screen bg-[#FAF9F6] animate-fade-in">
                     ${toastHTML}
                     ${modalHTML}
 
                     <!-- Header -->
-                    <header class="bg-white border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-white/95 shadow-2xs">
-                        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <header class="bg-white border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-white/95 shadow-sm">
+                        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
-                                <div class="w-11 h-11 rounded-2xl bg-[#D3E8FA] border border-sky-300 flex items-center justify-center text-sky-800">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <div class="w-10 h-10 rounded-2xl bg-[#D3E8FA] border border-sky-300 flex items-center justify-center text-sky-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                         <path d="M12 3v1m0 16v1M4 12H3m18 0h-1M18.364 5.636l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
                                     </svg>
                                 </div>
                                 <div>
-                                    <h1 class="text-xl font-extrabold text-[#1A1A1A]">Finanças Pessoais</h1>
-                                    <p class="text-xs text-slate-500">Controle de caixa bento grid</p>
+                                    <h1 class="text-lg font-extrabold text-[#1A1A1A]">Finanças</h1>
+                                    <p class="text-[10px] text-slate-500">Gestão de Contas</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
+                            
+                            <div class="flex items-center gap-2 flex-wrap justify-center">
                                 <button onclick="state.modalType='expense';state.showModal=true;render()" 
-                                        class="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl flex items-center gap-1.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl flex items-center gap-1 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                         <line x1="12" y1="5" x2="12" y2="19"/>
                                         <line x1="5" y1="12" x2="19" y2="12"/>
                                     </svg>
                                     Registrar
                                 </button>
                                 <button onclick="resetApp()" 
-                                        class="px-3 py-2 text-xs font-bold text-purple-700 bg-[#F5EEFB] border border-purple-200/40 rounded-xl flex items-center gap-1.5">
+                                        class="px-3 py-1.5 text-xs font-bold text-purple-700 bg-[#F5EEFB] border border-purple-200/40 rounded-xl flex items-center gap-1 transition-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                         <path d="M1 4v6h6M2.05 13.5a9 9 0 1 1 .55-5.5L1 10"/>
                                     </svg>
-                                    Reiniciar
+                                    Reset
                                 </button>
                             </div>
                         </div>
                     </header>
 
                     <!-- Main -->
-                    <main class="max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-                        <!-- Alertas -->
-                        ${hasOverBudget ? `
-                            <div class="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 flex items-start gap-3.5">
-                                <div class="p-2 bg-rose-100 rounded-xl text-rose-600">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3ZM12 9v4m0 4h.01"/>
-                                    </svg>
-                                </div>
+                    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+                        
+                        <!-- Cards de Resumo -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">Saldo Total</p>
+                                <p class="text-2xl font-extrabold ${totalBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}">
+                                    ${formatCurrency(totalBalance)}
+                                </p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">Dívidas</p>
+                                <p class="text-2xl font-extrabold text-red-600">
+                                    ${formatCurrency(totalDebts)}
+                                </p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">Patrimônio</p>
+                                <p class="text-2xl font-extrabold ${netWorth >= 0 ? 'text-emerald-600' : 'text-red-600'}">
+                                    ${formatCurrency(netWorth)}
+                                </p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">Transações</p>
+                                <p class="text-2xl font-extrabold text-slate-700">
+                                    ${state.transactions.length}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Alerta de Patrimônio Negativo -->
+                        ${isNegative ? `
+                            <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-4 flex items-start gap-3 animate-fade-in">
+                                <div class="text-2xl">🚨</div>
                                 <div>
-                                    <h3 class="font-extrabold text-rose-950 text-sm">⚠️ Orçamento Excedido!</h3>
-                                    <p class="text-xs text-rose-800/90">
-                                        ${updatedCategories.filter(c => c.spent > c.limit).map(c => 
+                                    <h3 class="font-extrabold text-red-800">Patrimônio Negativo!</h3>
+                                    <p class="text-sm text-red-700">
+                                        Suas dívidas (${formatCurrency(totalDebts)}) são maiores que seu saldo total (${formatCurrency(totalBalance)}).
+                                        <br>Recomendamos pagar as dívidas prioritariamente.
+                                    </p>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${hasOverBudget ? `
+                            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex items-start gap-3">
+                                <div class="text-2xl">⚠️</div>
+                                <div>
+                                    <h3 class="font-extrabold text-amber-800">Orçamento Excedido!</h3>
+                                    <p class="text-sm text-amber-700">
+                                        ${categorySpending.filter(c => c.spent > c.limit).map(c => 
                                             `${c.name}: ${formatCurrency(c.spent)} > ${formatCurrency(c.limit)}`
                                         ).join(' • ')}
                                     </p>
@@ -931,111 +1088,135 @@
                             </div>
                         ` : ''}
 
-                        <!-- Bento Grid -->
-                        <div>
-                            <div class="flex justify-between mb-4">
-                                <span class="text-xs font-bold text-[#636E72]/85 uppercase">Resumo Financeiro</span>
+                        ${debtsHTML}
+
+                        <!-- Transferência entre Bancos -->
+                        ${transferHTML}
+
+                        <!-- Saldos dos Bancos -->
+                        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="bg-[#FAF9F6] border-b border-slate-200 p-4">
+                                <h3 class="font-bold text-sm flex items-center gap-2">
+                                    🏦 Contas Bancárias
+                                    <span class="text-xs text-slate-400">${state.banks.length} contas</span>
+                                </h3>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Pending -->
-                                <div onclick="state.focusedSection='pending';render()" 
-                                     class="rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${state.focusedSection === 'pending' ? 'bg-[#F3E8FF] border-[#C084FC] ring-8 ring-[#F3E8FF]/60' : 'bg-[#F3E8FF]/90 border-[#D8B4FE] hover:border-[#C084FC]'}">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-purple-600">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <polyline points="12 6 12 12 16 14"/>
-                                            </svg>
+                            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${state.banks.map(bank => {
+                                    const isNegative = bank.balance < 0;
+                                    return `
+                                        <div class="p-4 border rounded-2xl ${isNegative ? 'border-red-300 bg-red-50' : 'border-slate-200'}">
+                                            <div class="flex items-center gap-3">
+                                                <div class="${bank.color} w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold">
+                                                    ${bank.icon}
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-bold text-sm">${bank.name}</h4>
+                                                    <p class="${isNegative ? 'negative-balance' : 'positive-balance'} text-lg">
+                                                        ${formatCurrency(bank.balance)}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <h3 class="text-lg font-bold text-[#5B21B6]">Receber Pendente</h3>
-                                    </div>
-                                    <p class="text-3xl font-extrabold text-[#4C1D95]">${formatCurrency(totalPending)}</p>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Navegação de Seções -->
+                        <div class="flex flex-wrap gap-2">
+                            ${['overview', 'expenses', 'income', 'pending', 'receivables'].map(section => {
+                                const labels = { overview: '📊 Geral', expenses: '💸 Gastos', income: '💰 Receitas', pending: '⏳ Pendentes', receivables: '📅 Agendados' };
+                                const isActive = state.focusedSection === section;
+                                return `
+                                    <button onclick="state.focusedSection='${section}';render()" 
+                                            class="px-4 py-2 text-xs font-bold rounded-xl border transition-all ${isActive ? 'bg-[#E0F2FE] border-sky-300 text-[#0369A1]' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}">
+                                        ${labels[section]}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Conteúdo das Seções -->
+                        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="p-4">
+                                <!-- Busca -->
+                                <div class="relative mb-4">
+                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <input type="text" placeholder="Buscar transações..." value="${state.searchTerm}" 
+                                           oninput="state.searchTerm=this.value;render()" 
+                                           class="w-full pl-9 pr-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-200">
                                 </div>
 
-                                <!-- Revenue -->
-                                <div onclick="state.focusedSection='revenue';render()" 
-                                     class="rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${state.focusedSection === 'revenue' ? 'bg-[#DCFCE7] border-[#4ADE80] ring-8 ring-[#DCFCE7]/60' : 'bg-[#DCFCE7]/90 border-[#86EFAC] hover:border-[#4ADE80]'}">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                                                <polyline points="17 6 23 6 23 12"/>
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-[#166534]">Receita</h3>
-                                    </div>
-                                    <p class="text-3xl font-extrabold text-[#064E3B]">${formatCurrency(totalRevenue)}</p>
-                                </div>
-
-                                <!-- Receivables -->
-                                <div onclick="state.focusedSection='receivables';render()" 
-                                     class="rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${state.focusedSection === 'receivables' ? 'bg-[#FFEDD5] border-[#FB923C] ring-8 ring-[#FFEDD5]/60' : 'bg-[#FFEDD5]/90 border-[#FDBA74] hover:border-[#FB923C]'}">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                                <line x1="3" y1="10" x2="21" y2="10"/>
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-[#9A3412]">A Receber</h3>
-                                    </div>
-                                    <p class="text-3xl font-extrabold text-[#7C2D12]">${formatCurrency(totalReceivable)}</p>
-                                </div>
-
-                                <!-- Expenses -->
-                                <div onclick="state.focusedSection='expenses';render()" 
-                                     class="rounded-[30px] p-6 flex flex-col justify-between min-h-[140px] cursor-pointer transition-all border-2 ${state.focusedSection === 'expenses' ? 'bg-[#E0F2FE] border-[#38BDF8] ring-8 ring-[#E0F2FE]/60' : 'bg-[#E0F2FE]/90 border-[#7DD3FC] hover:border-[#38BDF8]'}">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-sky-600">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
-                                                <polyline points="17 18 23 18 23 12"/>
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-[#075985]">Gastos</h3>
-                                    </div>
-                                    <p class="text-3xl font-extrabold text-[#0C4A6E]">${formatCurrency(totalExpenses)}</p>
+                                <!-- Lista de Transações -->
+                                <div class="space-y-2 max-h-[500px] overflow-y-auto">
+                                    ${filteredTransactions.length === 0 ? 
+                                        '<div class="text-center py-8 text-slate-400 text-sm">Nenhuma transação encontrada</div>' :
+                                        filteredTransactions.map(tx => {
+                                            const isIncome = tx.type === 'income';
+                                            const isTransfer = tx.type === 'transfer';
+                                            return `
+                                                <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm transition-all">
+                                                    <div class="flex-1 min-w-0">
+                                                        <span class="font-bold text-sm block truncate">${tx.title}</span>
+                                                        <span class="text-[10px] text-slate-400">
+                                                            ${tx.categoryOrSource || tx.fromBank || ''} • ${tx.date} 
+                                                            ${tx.bank ? `• ${tx.bank}` : ''}
+                                                            ${tx.fromBank ? `• ${tx.fromBank} → ${tx.toBank}` : ''}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3 ml-2">
+                                                        <span class="text-sm font-bold ${isIncome ? 'text-emerald-600' : isTransfer ? 'text-blue-600' : 'text-red-600'}">
+                                                            ${isIncome ? '+' : isTransfer ? '🔄' : '-'}${formatCurrency(tx.amount)}
+                                                        </span>
+                                                        <button onclick="deleteTransaction('${tx.id}')" class="text-slate-300 hover:text-red-600 transition-all">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                                                <line x1="6" y1="6" x2="18" y2="18"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')
+                                    }
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Detalhes -->
-                        <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-                            <div class="bg-[#FAF9F6] border-b border-slate-200/60 p-4 flex flex-wrap items-center gap-3">
-                                <div class="flex bg-white p-1 rounded-2xl border border-slate-200/50">
-                                    ${['expenses', 'revenue', 'receivables', 'pending'].map(tab => {
-                                        const labels = { expenses: '💸 Gastos', revenue: '📈 Receitas', receivables: '📅 A Receber', pending: '⏳ Pendentes' };
-                                        const colors = { expenses: 'bg-[#ECF5FC] text-sky-800', revenue: 'bg-[#EAF7EE] text-emerald-800', receivables: 'bg-[#FDF1EB] text-amber-800', pending: 'bg-[#F5EEFB] text-purple-800' };
-                                        return `
-                                            <button onclick="state.focusedSection='${tab}';render()" 
-                                                    class="px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${state.focusedSection === tab ? colors[tab] : 'text-[#636E72]'}">
-                                                ${labels[tab]}
-                                            </button>
-                                        `;
-                                    }).join('')}
-                                </div>
-                            </div>
-                            <div class="p-6">
-                                ${sectionHTML}
-                            </div>
-                        </div>
                     </main>
 
                     <!-- Footer -->
-                    <footer class="bg-white border-t py-6 mt-12 text-center text-xs text-slate-400">
-                        <p>© 2026 Finanças Pessoais • Design Bento Grid</p>
+                    <footer class="bg-white border-t py-4 mt-8 text-center text-[10px] text-slate-400">
+                        <p>© 2026 Finanças Bento Grid • Gestão de Contas e Dívidas</p>
                     </footer>
                 </div>
             `;
         }
 
         // ============================================================
-        // ATTACH EVENTS
+        // FUNÇÃO DE TRANSFERÊNCIA (Chamada pelo onclick)
         // ============================================================
-        function attachEvents() {
-            // Eventos já estão inline nos elementos HTML
+        function doTransfer() {
+            const from = document.getElementById('transferFrom')?.value;
+            const to = document.getElementById('transferTo')?.value;
+            const amount = document.getElementById('transferAmount')?.value;
+            
+            if (!from || !to || !amount) {
+                showToast('❌ Preencha todos os campos!', 'error');
+                return;
+            }
+            
+            if (from === to) {
+                showToast('❌ Não é possível transferir para o mesmo banco!', 'error');
+                return;
+            }
+            
+            transferBetweenBanks(from, to, Number(amount));
+            document.getElementById('transferAmount').value = '';
         }
 
         // ============================================================
@@ -1043,6 +1224,7 @@
         // ============================================================
         const hasSaved = loadState();
         if (!hasSaved) {
+            state.banks = [...DEFAULT_BANKS];
             state.categories = [...DEFAULT_CATEGORIES];
             state.incomeSources = [...DEFAULT_INCOME_SOURCES];
         }
@@ -1050,3 +1232,4 @@
     </script>
 </body>
 </html>
+                
