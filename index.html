@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finanças Bento Grid • Gestão de Contas</title>
+    <title>Finanças • Gestão de Saldo e Parcelas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,92 +27,74 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-pulse-slow { animation: pulse 2s ease-in-out infinite; }
         .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #F3F4F6; }
         ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
         
-        body {
-            background: #FAF9F6;
-            color: #2D3436;
-            font-family: 'Quicksand', sans-serif;
-            min-height: 100vh;
-        }
-        
+        body { background: #FAF9F6; color: #2D3436; font-family: 'Quicksand', sans-serif; min-height: 100vh; }
         .hidden { display: none !important; }
         .transition-all { transition: all 0.2s ease-in-out; }
+        .modal-overlay { background: rgba(45, 52, 54, 0.6); backdrop-filter: blur(4px); }
         
-        .bento-card {
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            cursor: pointer;
-        }
+        .negative-balance { color: #DC2626; font-weight: 800; }
+        .positive-balance { color: #059669; font-weight: 800; }
         
-        .bento-card.active {
-            transform: scale(1.02);
-        }
+        .debt-tag { background: #FEE2E2; color: #991B1B; padding: 2px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; }
         
-        .bento-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-        }
+        .btn-pagar { background: #D1FAE5; color: #065F46; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid #6EE7B7; cursor: pointer; transition: all 0.2s; }
+        .btn-pagar:hover { background: #6EE7B7; transform: scale(1.05); }
+        .btn-pagar:active { transform: scale(0.95); }
         
-        .modal-overlay {
-            background: rgba(45, 52, 54, 0.6);
-            backdrop-filter: blur(4px);
-        }
+        .btn-delete { padding: 4px 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: #9CA3AF; }
+        .btn-delete:hover { background: #FEE2E2; color: #DC2626; transform: scale(1.1); }
         
-        .negative-balance {
-            color: #DC2626;
-            font-weight: 800;
-        }
+        .btn-edit { padding: 4px 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: #60A5FA; }
+        .btn-edit:hover { background: #EFF6FF; color: #2563EB; transform: scale(1.1); }
         
-        .positive-balance {
-            color: #059669;
-            font-weight: 800;
-        }
+        .bank-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: white; }
         
-        .debt-tag {
-            background: #FEE2E2;
-            color: #991B1B;
-            padding: 2px 10px;
-            border-radius: 9999px;
-            font-size: 10px;
+        .option-card { border: 2px solid #E5E7EB; border-radius: 16px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+        .option-card:hover { border-color: #93C5FD; background: #F0F9FF; }
+        .option-card .icon { font-size: 28px; margin-bottom: 8px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; color: #636E72; max-width: 400px; margin: 0 auto; }
+        
+        .btn-voltar {
+            background: #E0E7FF;
+            color: #4338CA;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: 700;
+            border: 1px solid #A5B4FC;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .btn-voltar:hover { background: #C7D2FE; transform: scale(1.02); }
         
-        .bank-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 800;
-            color: white;
-        }
+        .input-field { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 14px; background: white; }
+        .input-field:focus { outline: 2px solid #93C5FD; outline-offset: 1px; }
+        
+        .btn { padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary { background: #BAE6FD; color: #0369A1; }
+        .btn-primary:hover { background: #7DD3FC; transform: scale(1.02); }
+        .btn-danger { background: #FEE2E2; color: #991B1B; }
+        .btn-danger:hover { background: #FECACA; }
+        .btn-success { background: #D1FAE5; color: #065F46; }
+        .btn-success:hover { background: #A7F3D0; }
+        
+        .card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #E5E7EB; }
     </style>
 </head>
 <body>
@@ -126,42 +108,22 @@
             return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         };
 
-        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+        const generateId = () => {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        };
 
         const bankColors = {
-            'NuBank': 'bg-purple-600',
-            'Itaú': 'bg-orange-600',
-            'Bradesco': 'bg-red-600',
-            'Santander': 'bg-red-700',
-            'Caixa': 'bg-blue-600',
-            'Banco do Brasil': 'bg-yellow-700',
-            'Inter': 'bg-orange-500',
-            'C6 Bank': 'bg-black',
-            'Original': 'bg-green-600',
-            'Outro': 'bg-gray-600'
+            'NuBank': 'bg-purple-600', 'Itaú': 'bg-orange-600', 'Bradesco': 'bg-red-600',
+            'Santander': 'bg-red-700', 'Caixa': 'bg-blue-600', 'Banco do Brasil': 'bg-yellow-700',
+            'Inter': 'bg-orange-500', 'C6 Bank': 'bg-black', 'Original': 'bg-green-600', 'Outro': 'bg-gray-600'
         };
 
         // ============================================================
-        // DADOS PADRÃO
+        // DADOS PADRÃO - VAZIOS
         // ============================================================
-        const DEFAULT_BANKS = [
-            { id: 'b1', name: 'NuBank', balance: 2500, color: 'bg-purple-600', icon: 'N' },
-            { id: 'b2', name: 'Itaú', balance: 1800, color: 'bg-orange-600', icon: 'I' },
-            { id: 'b3', name: 'Caixa', balance: 500, color: 'bg-blue-600', icon: 'C' },
-        ];
-
-        const DEFAULT_CATEGORIES = [
-            { id: 'c1', name: 'Alimentação', limit: 800, spent: 0, color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-            { id: 'c2', name: 'Transporte', limit: 350, spent: 0, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-            { id: 'c3', name: 'Lazer', limit: 250, spent: 0, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-            { id: 'c4', name: 'Moradia', limit: 1500, spent: 0, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-        ];
-
-        const DEFAULT_INCOME_SOURCES = [
-            { id: 's1', name: 'Salário', expectedAmount: 3000, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-            { id: 's2', name: 'Aluguel', expectedAmount: 800, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-            { id: 's3', name: 'Clientes / Freelas', expectedAmount: 1200, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-        ];
+        const DEFAULT_BANKS = [];
+        const DEFAULT_CATEGORIES = [];
+        const DEFAULT_INCOME_SOURCES = [];
 
         // ============================================================
         // ESTADO GLOBAL
@@ -186,29 +148,17 @@
             modalBank: '',
             modalDate: new Date().toISOString().split('T')[0],
             
-            // Forms
-            newBankName: '',
-            newBankBalance: 0,
-            newCatName: '',
-            newCatLimit: 500,
-            newCatColor: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60',
-            newSrcName: '',
-            newSrcExpected: 1000,
-            newSrcColor: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60',
-            newPendingTitle: '',
-            newPendingAmount: '',
-            newPendingSource: '',
-            newReceivableTitle: '',
-            newReceivableAmount: '',
-            newReceivableDate: '',
-            newReceivableSource: '',
-            newDebtTitle: '',
-            newDebtAmount: '',
-            newDebtBank: '',
-            newDebtDueDate: '',
+            isEditing: false,
+            editingId: null,
+            
+            showPaymentOptions: false,
+            paymentAmount: 0,
+            paymentTitle: '',
+            paymentCategory: '',
+            paymentDate: '',
+            selectedBank: '',
             
             activeSetupTab: 'banks',
-            loadDemo: true,
         };
 
         // ============================================================
@@ -216,230 +166,652 @@
         // ============================================================
         function loadState() {
             try {
-                const saved = localStorage.getItem('finance_data_v2');
+                const saved = localStorage.getItem('finance_data_v8');
                 if (saved) {
                     const data = JSON.parse(saved);
                     Object.assign(state, data);
                     return true;
                 }
-            } catch (e) {}
+            } catch (e) { console.log('Erro ao carregar:', e); }
             return false;
         }
 
         function saveState() {
             try {
-                localStorage.setItem('finance_data_v2', JSON.stringify(state));
-            } catch (e) {}
-        }
-
-        function setState(newState) {
-            Object.assign(state, newState);
-            saveState();
-            render();
+                localStorage.setItem('finance_data_v8', JSON.stringify(state));
+                console.log('💾 Estado salvo!');
+            } catch (e) { console.log('Erro ao salvar:', e); }
         }
 
         function showToast(message, type = 'success') {
             state.toast = { message, type };
             render();
-            setTimeout(() => {
-                state.toast = null;
-                render();
-            }, 3500);
+            setTimeout(() => { state.toast = null; render(); }, 3500);
         }
 
-        // ============================================================
-        // FUNÇÕES DE NEGÓCIO - BANCOS
-        // ============================================================
-        function getTotalBalance() {
-            return state.banks.reduce((sum, bank) => sum + Number(bank.balance), 0);
+        function getTotalBalance() { 
+            return state.banks.reduce((sum, bank) => sum + Number(bank.balance || 0), 0); 
         }
 
-        function getTotalDebts() {
-            return state.debts.reduce((sum, debt) => sum + Number(debt.amount), 0);
+        function getTotalDebts() { 
+            return state.debts.reduce((sum, debt) => sum + Number(debt.amount || 0), 0); 
         }
 
-        function getNetWorth() {
-            return getTotalBalance() - getTotalDebts();
+        function getNetWorth() { 
+            return getTotalBalance() - getTotalDebts(); 
         }
 
         function getBankBalance(bankName) {
             const bank = state.banks.find(b => b.name === bankName);
-            return bank ? Number(bank.balance) : 0;
+            return bank ? Number(bank.balance || 0) : 0;
         }
 
-        function addBank(e) {
-            e.preventDefault();
-            if (!state.newBankName.trim()) return;
-            const name = state.newBankName.trim();
+        // ============================================================
+        // FUNÇÕES DE ADICIONAR - COM IDs
+        // ============================================================
+        function addBank() {
+            console.log('🔍 addBank chamado');
+            
+            const nameInput = document.getElementById('bankNameInput');
+            const balanceInput = document.getElementById('bankBalanceInput');
+            
+            if (!nameInput || !balanceInput) {
+                showToast('❌ Erro: inputs não encontrados!', 'error');
+                return;
+            }
+            
+            const name = nameInput.value.trim();
+            const balance = Number(balanceInput.value) || 0;
+            
+            if (!name || name === 'Selecione um banco...') {
+                showToast('❌ Selecione ou digite o nome do banco!', 'error');
+                return;
+            }
+            
             state.banks.push({
                 id: generateId(),
                 name: name,
-                balance: Number(state.newBankBalance) || 0,
+                balance: balance,
                 color: bankColors[name] || 'bg-gray-600',
                 icon: name.charAt(0).toUpperCase(),
             });
-            state.newBankName = '';
-            state.newBankBalance = 0;
+            
+            nameInput.value = '';
+            balanceInput.value = '';
+            
+            saveState();
+            render();
             showToast(`🏦 Banco ${name} adicionado!`);
+            console.log('✅ Bancos:', state.banks);
+        }
+
+        function addCategory() {
+            console.log('🔍 addCategory chamado');
+            
+            const nameInput = document.getElementById('catNameInput');
+            const limitInput = document.getElementById('catLimitInput');
+            
+            if (!nameInput || !limitInput) {
+                showToast('❌ Erro: inputs não encontrados!', 'error');
+                return;
+            }
+            
+            const name = nameInput.value.trim();
+            const limit = Number(limitInput.value) || 0;
+            
+            if (!name) {
+                showToast('❌ Digite o nome da categoria!', 'error');
+                return;
+            }
+            
+            state.categories.push({
+                id: generateId(),
+                name: name,
+                limit: limit,
+                spent: 0,
+                color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60',
+            });
+            
+            nameInput.value = '';
+            limitInput.value = '';
+            
+            saveState();
+            render();
+            showToast(`📂 Categoria ${name} adicionada!`);
+            console.log('✅ Categorias:', state.categories);
+        }
+
+        function addSource() {
+            console.log('🔍 addSource chamado');
+            
+            const nameInput = document.getElementById('srcNameInput');
+            const expectedInput = document.getElementById('srcExpectedInput');
+            
+            if (!nameInput || !expectedInput) {
+                showToast('❌ Erro: inputs não encontrados!', 'error');
+                return;
+            }
+            
+            const name = nameInput.value.trim();
+            const expected = Number(expectedInput.value) || 0;
+            
+            if (!name) {
+                showToast('❌ Digite o nome da fonte!', 'error');
+                return;
+            }
+            
+            state.incomeSources.push({
+                id: generateId(),
+                name: name,
+                expectedAmount: expected,
+                color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60',
+            });
+            
+            nameInput.value = '';
+            expectedInput.value = '';
+            
+            saveState();
+            render();
+            showToast(`💰 Fonte ${name} adicionada!`);
+            console.log('✅ Fontes:', state.incomeSources);
+        }
+
+        // ============================================================
+        // FUNÇÕES DE EXCLUSÃO
+        // ============================================================
+        function deleteBank(id) {
+            if (confirm('Excluir este banco?')) {
+                state.banks = state.banks.filter(b => b.id !== id);
+                saveState();
+                render();
+                showToast('🏦 Banco removido!');
+            }
+        }
+
+        function deleteCategory(id) {
+            if (confirm('Excluir esta categoria?')) {
+                state.categories = state.categories.filter(c => c.id !== id);
+                saveState();
+                render();
+                showToast('📂 Categoria removida!');
+            }
+        }
+
+        function deleteSource(id) {
+            if (confirm('Excluir esta fonte?')) {
+                state.incomeSources = state.incomeSources.filter(s => s.id !== id);
+                saveState();
+                render();
+                showToast('💰 Fonte removida!');
+            }
+        }
+
+        function deleteTransaction(id) {
+            if (!confirm('Excluir esta transação?')) return;
+            
+            const tx = state.transactions.find(t => t.id === id);
+            if (tx) {
+                const bank = state.banks.find(b => b.name === tx.bank);
+                if (bank) {
+                    if (tx.type === 'expense') bank.balance = (bank.balance || 0) + Number(tx.amount);
+                    else if (tx.type === 'income') bank.balance = (bank.balance || 0) - Number(tx.amount);
+                }
+                if (tx.debtId) {
+                    state.debts = state.debts.filter(d => d.id !== tx.debtId);
+                }
+            }
+            state.transactions = state.transactions.filter(t => t.id !== id);
+            showToast('🗑️ Transação removida');
             saveState();
             render();
         }
 
-        function removeBank(id) {
-            if (confirm('Remover este banco? Todas as transações vinculadas serão mantidas.')) {
-                state.banks = state.banks.filter(b => b.id !== id);
+        function deleteDebt(id) {
+            if (confirm('Excluir esta dívida?')) {
+                state.debts = state.debts.filter(d => d.id !== id);
+                showToast('⚠️ Dívida removida!');
                 saveState();
                 render();
             }
         }
 
-        function transferBetweenBanks(fromBank, toBank, amount) {
-            if (fromBank === toBank) return;
-            const from = state.banks.find(b => b.name === fromBank);
-            const to = state.banks.find(b => b.name === toBank);
-            if (!from || !to) return;
+        function deletePending(id) {
+            if (confirm('Excluir este pendente?')) {
+                state.pendingReceipts = state.pendingReceipts.filter(p => p.id !== id);
+                showToast('⏳ Pendente removido!');
+                saveState();
+                render();
+            }
+        }
+
+        function deleteReceivable(id) {
+            if (confirm('Excluir este agendamento?')) {
+                state.receivables = state.receivables.filter(r => r.id !== id);
+                showToast('📅 Agendamento removido!');
+                saveState();
+                render();
+            }
+        }
+
+        // ============================================================
+        // FUNÇÕES DE EDIÇÃO
+        // ============================================================
+        function startEditTransaction(id) {
+            const tx = state.transactions.find(t => t.id === id);
+            if (!tx) return;
             
-            const value = Number(amount);
-            if (from.balance < value) {
-                showToast('❌ Saldo insuficiente no banco de origem!', 'error');
+            state.isEditing = true;
+            state.editingId = id;
+            state.modalType = tx.type;
+            state.modalTitle = tx.title;
+            state.modalAmount = tx.amount;
+            state.modalCategory = tx.categoryOrSource || '';
+            state.modalBank = tx.bank || '';
+            state.modalDate = tx.date;
+            state.showModal = true;
+            render();
+        }
+
+        function submitEditTransaction(e) {
+            e.preventDefault();
+            if (!state.modalTitle.trim() || !state.modalAmount) return;
+            
+            const tx = state.transactions.find(t => t.id === state.editingId);
+            if (!tx) return;
+            
+            const oldAmount = Number(tx.amount);
+            const newAmount = Number(state.modalAmount);
+            const oldBank = tx.bank;
+            const newBank = state.modalBank || state.banks[0]?.name;
+            
+            const oldBankObj = state.banks.find(b => b.name === oldBank);
+            if (oldBankObj) {
+                if (tx.type === 'expense') oldBankObj.balance = (oldBankObj.balance || 0) + oldAmount;
+                else if (tx.type === 'income') oldBankObj.balance = (oldBankObj.balance || 0) - oldAmount;
+            }
+            
+            tx.title = state.modalTitle.trim();
+            tx.amount = newAmount;
+            tx.categoryOrSource = state.modalCategory || state.categories[0]?.name;
+            tx.bank = newBank;
+            tx.date = state.modalDate;
+            
+            const newBankObj = state.banks.find(b => b.name === newBank);
+            if (newBankObj) {
+                if (tx.type === 'expense') newBankObj.balance = (newBankObj.balance || 0) - newAmount;
+                else if (tx.type === 'income') newBankObj.balance = (newBankObj.balance || 0) + newAmount;
+            }
+            
+            state.isEditing = false;
+            state.editingId = null;
+            state.showModal = false;
+            state.modalTitle = '';
+            state.modalAmount = '';
+            
+            showToast('✏️ Transação editada!');
+            saveState();
+            render();
+        }
+
+        // ============================================================
+        // SISTEMA DE TRANSAÇÃO
+        // ============================================================
+        function submitTransaction(e) {
+            e.preventDefault();
+            if (state.isEditing) {
+                submitEditTransaction(e);
                 return;
             }
             
-            from.balance -= value;
-            to.balance += value;
+            if (!state.modalTitle.trim() || !state.modalAmount) return;
+            
+            const title = state.modalTitle.trim();
+            const amount = Number(state.modalAmount);
+            const category = state.modalCategory || state.categories[0]?.name;
+            const bank = state.modalBank || state.banks[0]?.name;
+            const date = state.modalDate;
+            
+            processTransaction(title, amount, category, bank, date);
+        }
+
+        function processTransaction(title, amount, category, bank, date) {
+            const bankObj = state.banks.find(b => b.name === bank);
+            if (!bankObj) {
+                showToast('❌ Banco não encontrado!', 'error');
+                return;
+            }
+
+            const value = Number(amount);
+            
+            if (state.modalType === 'income') {
+                bankObj.balance = (bankObj.balance || 0) + value;
+                state.transactions.push({
+                    id: generateId(),
+                    type: 'income',
+                    title: title,
+                    amount: value,
+                    date: date,
+                    categoryOrSource: category,
+                    bank: bank,
+                });
+                showToast(`💰 ${formatCurrency(value)} recebido!`);
+                saveState();
+                render();
+                return;
+            }
+
+            if ((bankObj.balance || 0) >= value) {
+                bankObj.balance = (bankObj.balance || 0) - value;
+                state.transactions.push({
+                    id: generateId(),
+                    type: 'expense',
+                    title: title,
+                    amount: value,
+                    date: date,
+                    categoryOrSource: category,
+                    bank: bank,
+                    paymentMethod: 'à vista',
+                });
+                showToast(`💸 ${formatCurrency(value)} pago!`);
+                saveState();
+                render();
+                return;
+            }
+
+            // Saldo insuficiente
+            state.paymentAmount = value;
+            state.paymentTitle = title;
+            state.paymentCategory = category;
+            state.paymentDate = date;
+            state.selectedBank = bank;
+            state.showPaymentOptions = true;
+            state.showModal = false;
+            render();
+        }
+
+        function payWithOtherBank() {
+            const value = Number(state.paymentAmount);
+            const originalBank = state.selectedBank;
+            const deficit = value - getBankBalance(originalBank);
+            
+            const banksWithBalance = state.banks.filter(b => b.name !== originalBank && (b.balance || 0) > 0);
+            
+            if (banksWithBalance.length === 0) {
+                showToast('❌ Nenhum outro banco com saldo!', 'error');
+                return;
+            }
+
+            let optionsHTML = banksWithBalance.map(b => `
+                <button onclick="transferAndPay('${b.name}', ${deficit})" 
+                        class="w-full text-left p-3 border rounded-xl hover:bg-slate-50 transition-all flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="${b.color} w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold">${b.icon}</div>
+                        <div>
+                            <span class="font-bold text-sm">${b.name}</span>
+                            <span class="text-xs text-slate-500 block">Saldo: ${formatCurrency(b.balance)}</span>
+                        </div>
+                    </div>
+                    <span class="text-sm font-bold text-emerald-600">Transferir ${formatCurrency(deficit)}</span>
+                </button>
+            `).join('');
+
+            showToastDialog(
+                `💰 Transferir ${formatCurrency(deficit)}`,
+                `Saldo insuficiente em ${originalBank}. Escolha de onde transferir:`,
+                optionsHTML
+            );
+        }
+
+        function transferAndPay(fromBank, amount) {
+            const originalBank = state.selectedBank;
+            const from = state.banks.find(b => b.name === fromBank);
+            const to = state.banks.find(b => b.name === originalBank);
+            
+            if (!from || !to) return;
+            if ((from.balance || 0) < amount) {
+                showToast(`❌ Saldo insuficiente em ${fromBank}!`, 'error');
+                return;
+            }
+
+            from.balance = (from.balance || 0) - amount;
+            to.balance = (to.balance || 0) + amount;
             
             state.transactions.push({
                 id: generateId(),
                 type: 'transfer',
-                title: `Transferência: ${fromBank} → ${toBank}`,
-                amount: value,
-                date: new Date().toISOString().split('T')[0],
+                title: `Transferência: ${fromBank} → ${originalBank}`,
+                amount: amount,
+                date: state.paymentDate,
                 fromBank: fromBank,
-                toBank: toBank,
+                toBank: originalBank,
             });
-            
-            showToast(`🔄 Transferência de ${formatCurrency(value)} realizada!`);
-            saveState();
-            render();
-        }
 
-        // ============================================================
-        // FUNÇÕES DE NEGÓCIO - TRANSAÇÕES
-        // ============================================================
-        function createTransaction(e) {
-            e.preventDefault();
-            if (!state.modalTitle.trim() || !state.modalAmount) return;
-            
-            const amount = Number(state.modalAmount);
-            const bankName = state.modalBank || state.banks[0]?.name;
-            
-            // Verificar saldo para gastos
-            if (state.modalType === 'expense') {
-                const bank = state.banks.find(b => b.name === bankName);
-                if (!bank) {
-                    showToast('❌ Banco não encontrado!', 'error');
-                    return;
-                }
-                
-                // Se o saldo ficar negativo, registrar como dívida
-                if (bank.balance < amount) {
-                    const debtAmount = amount - bank.balance;
-                    const debtTitle = `Dívida: ${state.modalTitle}`;
-                    
-                    state.debts.push({
-                        id: generateId(),
-                        title: debtTitle,
-                        amount: debtAmount,
-                        bank: bankName,
-                        dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-                        createdAt: new Date().toISOString().split('T')[0],
-                        status: 'pending',
-                    });
-                    
-                    bank.balance = 0;
-                    showToast(`⚠️ Saldo insuficiente! Dívida de ${formatCurrency(debtAmount)} registrada.`, 'error');
-                } else {
-                    bank.balance -= amount;
-                }
-            } else {
-                // Income
-                const bank = state.banks.find(b => b.name === bankName);
-                if (bank) {
-                    bank.balance += amount;
-                }
-            }
+            const value = Number(state.paymentAmount);
+            to.balance = (to.balance || 0) - value;
             
             state.transactions.push({
                 id: generateId(),
-                type: state.modalType,
-                title: state.modalTitle.trim(),
-                amount: amount,
-                date: state.modalDate,
-                categoryOrSource: state.modalCategory || (state.modalType === 'expense' ? state.categories[0]?.name : state.incomeSources[0]?.name),
-                bank: bankName,
+                type: 'expense',
+                title: state.paymentTitle,
+                amount: value,
+                date: state.paymentDate,
+                categoryOrSource: state.paymentCategory,
+                bank: originalBank,
+                paymentMethod: 'à vista (com transferência)',
+                transferredFrom: fromBank,
             });
-            
-            state.showModal = false;
-            state.modalTitle = '';
-            state.modalAmount = '';
-            state.modalCategory = '';
-            
-            showToast(`${state.modalType === 'expense' ? '💸' : '💰'} Lançamento registrado!`);
+
+            state.showPaymentOptions = false;
+            showToast(`✅ Despesa paga usando saldo de ${fromBank}!`);
             saveState();
             render();
         }
 
-        function deleteTransaction(id) {
-            const tx = state.transactions.find(t => t.id === id);
-            if (tx) {
-                // Reverter saldo do banco
-                const bank = state.banks.find(b => b.name === tx.bank);
-                if (bank) {
-                    if (tx.type === 'expense') {
-                        bank.balance += Number(tx.amount);
-                    } else if (tx.type === 'income') {
-                        bank.balance -= Number(tx.amount);
-                    }
-                }
+        function setupInstallment() {
+            const value = Number(state.paymentAmount);
+            
+            showToastDialog(
+                `📅 Parcelar em até 12x`,
+                `Digite o número de parcelas (2 a 12):`,
+                `
+                    <div class="flex gap-3 mt-4">
+                        <input type="number" id="installmentCount" min="2" max="12" value="3" 
+                               class="flex-1 px-4 py-3 border rounded-xl text-lg font-bold">
+                        <button onclick="confirmInstallment()" 
+                                class="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600 transition-all">
+                            Parcelar
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">
+                        Cada parcela será de ~${formatCurrency(value/3)} (sem juros)
+                    </p>
+                `
+            );
+        }
+
+        function confirmInstallment() {
+            const count = parseInt(document.getElementById('installmentCount')?.value) || 3;
+            const value = Number(state.paymentAmount);
+            const bank = state.selectedBank;
+            const installmentValue = value / count;
+            
+            const debtId = generateId();
+            state.debts.push({
+                id: debtId,
+                title: `Parcelado: ${state.paymentTitle}`,
+                amount: value,
+                bank: bank,
+                dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                createdAt: new Date().toISOString().split('T')[0],
+                status: 'pending',
+                installmentCount: count,
+                installmentValue: installmentValue,
+                paidInstallments: 0,
+                originalTitle: state.paymentTitle,
+            });
+
+            state.transactions.push({
+                id: generateId(),
+                type: 'expense',
+                title: `${state.paymentTitle} (Parcelado em ${count}x)`,
+                amount: value,
+                date: state.paymentDate,
+                categoryOrSource: state.paymentCategory,
+                bank: bank,
+                paymentMethod: `parcelado ${count}x`,
+                debtId: debtId,
+            });
+
+            const bankObj = state.banks.find(b => b.name === bank);
+            if (bankObj) {
+                bankObj.balance = (bankObj.balance || 0) - installmentValue;
             }
-            state.transactions = state.transactions.filter(t => t.id !== id);
-            showToast('🗑️ Transação removida e saldo restaurado');
+
+            state.showPaymentOptions = false;
+            showToast(`📅 Compra parcelada em ${count}x!`);
             saveState();
             render();
         }
 
-        function payDebt(id) {
-            const debt = state.debts.find(d => d.id === id);
+        function cancelTransaction() {
+            state.showPaymentOptions = false;
+            state.showModal = false;
+            showToast('❌ Transação cancelada', 'error');
+            render();
+        }
+
+        // ============================================================
+        // FUNÇÕES DE DÍVIDAS
+        // ============================================================
+        function payInstallment(debtId) {
+            const debt = state.debts.find(d => d.id === debtId);
             if (!debt) return;
             
             const bank = state.banks.find(b => b.name === debt.bank);
-            if (bank) {
-                if (bank.balance >= debt.amount) {
-                    bank.balance -= debt.amount;
-                    state.debts = state.debts.filter(d => d.id !== id);
-                    showToast(`✅ Dívida de ${formatCurrency(debt.amount)} paga!`);
-                } else {
-                    showToast(`❌ Saldo insuficiente no ${debt.bank} para pagar a dívida.`, 'error');
-                }
+            if (!bank) return;
+            
+            const installmentValue = debt.installmentValue || (debt.amount / debt.installmentCount);
+            
+            if ((bank.balance || 0) < installmentValue) {
+                showToast('❌ Saldo insuficiente!', 'error');
+                return;
             }
+            
+            bank.balance = (bank.balance || 0) - installmentValue;
+            debt.paidInstallments = (debt.paidInstallments || 0) + 1;
+            
+            state.transactions.push({
+                id: generateId(),
+                type: 'expense',
+                title: `Parcela ${debt.paidInstallments}/${debt.installmentCount}: ${debt.originalTitle}`,
+                amount: installmentValue,
+                date: new Date().toISOString().split('T')[0],
+                categoryOrSource: debt.originalTitle || 'Parcelado',
+                bank: debt.bank,
+                paymentMethod: 'parcela',
+                debtId: debtId,
+            });
+            
+            if (debt.paidInstallments >= debt.installmentCount) {
+                state.debts = state.debts.filter(d => d.id !== debtId);
+                showToast(`✅ Dívida totalmente paga!`);
+            } else {
+                showToast(`✅ Parcela ${debt.paidInstallments}/${debt.installmentCount} paga!`);
+            }
+            
+            saveState();
+            render();
+        }
+
+        function payFullDebt(debtId) {
+            const debt = state.debts.find(d => d.id === debtId);
+            if (!debt) return;
+            
+            const bank = state.banks.find(b => b.name === debt.bank);
+            if (!bank) return;
+            
+            const remaining = debt.amount - ((debt.paidInstallments || 0) * (debt.installmentValue || debt.amount / debt.installmentCount));
+            
+            if ((bank.balance || 0) < remaining) {
+                showToast('❌ Saldo insuficiente!', 'error');
+                return;
+            }
+            
+            bank.balance = (bank.balance || 0) - remaining;
+            state.transactions.push({
+                id: generateId(),
+                type: 'expense',
+                title: `Quitação: ${debt.originalTitle}`,
+                amount: remaining,
+                date: new Date().toISOString().split('T')[0],
+                categoryOrSource: debt.originalTitle || 'Parcelado',
+                bank: debt.bank,
+                paymentMethod: 'quitação antecipada',
+            });
+            
+            state.debts = state.debts.filter(d => d.id !== debtId);
+            showToast(`✅ Dívida quitada!`);
+            saveState();
+            render();
+        }
+
+        function addManualDebt(e) {
+            e.preventDefault();
+            if (!state.newDebtTitle || !state.newDebtAmount) return;
+            
+            state.debts.push({
+                id: generateId(),
+                title: state.newDebtTitle.trim(),
+                amount: Number(state.newDebtAmount),
+                bank: state.newDebtBank || state.banks[0]?.name || 'Outro',
+                dueDate: state.newDebtDueDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                createdAt: new Date().toISOString().split('T')[0],
+                status: 'pending',
+                installmentCount: 1,
+                installmentValue: Number(state.newDebtAmount),
+                paidInstallments: 0,
+                originalTitle: state.newDebtTitle.trim(),
+            });
+            
+            state.newDebtTitle = '';
+            state.newDebtAmount = '';
+            state.newDebtDueDate = '';
+            
+            showToast('⚠️ Dívida registrada!');
             saveState();
             render();
         }
 
         // ============================================================
-        // FUNÇÕES DE NEGÓCIO - PENDENTES E RECEBÍVEIS
+        // FUNÇÃO PARA DIALOG TOAST
+        // ============================================================
+        function showToastDialog(title, message, content) {
+            const dialog = document.createElement('div');
+            dialog.className = 'fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4';
+            dialog.id = 'custom-dialog';
+            dialog.innerHTML = `
+                <div class="bg-white rounded-3xl w-full max-w-md p-6 animate-pop-in">
+                    <h3 class="font-extrabold text-lg mb-2">${title}</h3>
+                    <p class="text-sm text-slate-600 mb-4">${message}</p>
+                    ${content}
+                    <button onclick="document.getElementById('custom-dialog').remove()" 
+                            class="mt-4 text-xs text-slate-400 hover:text-slate-600">
+                        Fechar
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+        }
+
+        // ============================================================
+        // FUNÇÕES DE PENDENTES E RECEBÍVEIS
         // ============================================================
         function confirmPending(id) {
             const pending = state.pendingReceipts.find(p => p.id === id);
             if (!pending) return;
-            
             state.pendingReceipts = state.pendingReceipts.filter(p => p.id !== id);
-            
             const bank = state.banks.find(b => b.name === pending.source);
-            if (bank) {
-                bank.balance += Number(pending.amount);
-            }
-            
+            if (bank) bank.balance = (bank.balance || 0) + Number(pending.amount);
             state.transactions.push({
                 id: generateId(),
                 type: 'income',
@@ -449,87 +821,14 @@
                 categoryOrSource: pending.source,
                 bank: pending.source,
             });
-            
             showToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
-            saveState();
-            render();
-        }
-
-        function receiveReceivable(id) {
-            const rec = state.receivables.find(r => r.id === id);
-            if (!rec) return;
-            
-            state.receivables = state.receivables.map(r => r.id === id ? { ...r, status: 'received' } : r);
-            
-            const bank = state.banks.find(b => b.name === rec.source);
-            if (bank) {
-                bank.balance += Number(rec.amount);
-            }
-            
-            state.transactions.push({
-                id: generateId(),
-                type: 'income',
-                title: `[Recebido] ${rec.title}`,
-                amount: rec.amount,
-                date: new Date().toISOString().split('T')[0],
-                categoryOrSource: rec.source,
-                bank: rec.source,
-            });
-            
-            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
-            saveState();
-            render();
-        }
-
-        // ============================================================
-        // FUNÇÕES DE NEGÓCIO - CATEGORIAS E FONTES
-        // ============================================================
-        function addCategory(e) {
-            e.preventDefault();
-            if (!state.newCatName.trim()) return;
-            state.categories.push({
-                id: generateId(),
-                name: state.newCatName.trim(),
-                limit: Number(state.newCatLimit) || 0,
-                spent: 0,
-                color: state.newCatColor,
-            });
-            state.newCatName = '';
-            state.newCatLimit = 500;
-            saveState();
-            render();
-        }
-
-        function removeCategory(id) {
-            state.categories = state.categories.filter(c => c.id !== id);
-            saveState();
-            render();
-        }
-
-        function addSource(e) {
-            e.preventDefault();
-            if (!state.newSrcName.trim()) return;
-            state.incomeSources.push({
-                id: generateId(),
-                name: state.newSrcName.trim(),
-                expectedAmount: Number(state.newSrcExpected) || 0,
-                color: state.newSrcColor,
-            });
-            state.newSrcName = '';
-            state.newSrcExpected = 1000;
-            saveState();
-            render();
-        }
-
-        function removeSource(id) {
-            state.incomeSources = state.incomeSources.filter(s => s.id !== id);
             saveState();
             render();
         }
 
         function addPending(e) {
             e.preventDefault();
-            if (!state.newPendingTitle.trim() || !state.newPendingAmount) return;
+            if (!state.newPendingTitle || !state.newPendingAmount) return;
             state.pendingReceipts.push({
                 id: generateId(),
                 title: state.newPendingTitle.trim(),
@@ -545,9 +844,29 @@
             render();
         }
 
+        function receiveReceivable(id) {
+            const rec = state.receivables.find(r => r.id === id);
+            if (!rec) return;
+            state.receivables = state.receivables.map(r => r.id === id ? { ...r, status: 'received' } : r);
+            const bank = state.banks.find(b => b.name === rec.source);
+            if (bank) bank.balance = (bank.balance || 0) + Number(rec.amount);
+            state.transactions.push({
+                id: generateId(),
+                type: 'income',
+                title: `[Recebido] ${rec.title}`,
+                amount: rec.amount,
+                date: new Date().toISOString().split('T')[0],
+                categoryOrSource: rec.source,
+                bank: rec.source,
+            });
+            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
+            saveState();
+            render();
+        }
+
         function addReceivable(e) {
             e.preventDefault();
-            if (!state.newReceivableTitle.trim() || !state.newReceivableAmount || !state.newReceivableDate) return;
+            if (!state.newReceivableTitle || !state.newReceivableAmount || !state.newReceivableDate) return;
             state.receivables.push({
                 id: generateId(),
                 title: state.newReceivableTitle.trim(),
@@ -566,640 +885,44 @@
         }
 
         function toggleReminder(id) {
-            state.receivables = state.receivables.map(r => 
-                r.id === id ? { ...r, reminderActive: !r.reminderActive } : r
-            );
+            state.receivables = state.receivables.map(r => r.id === id ? { ...r, reminderActive: !r.reminderActive } : r);
             saveState();
             render();
         }
 
         // ============================================================
-        // FUNÇÕES DE NEGÓCIO - DÍVIDAS
+        // FUNÇÃO DE TRANSFERÊNCIA
         // ============================================================
-        function addDebt(e) {
-            e.preventDefault();
-            if (!state.newDebtTitle.trim() || !state.newDebtAmount) return;
+        function transferBetweenBanks(fromBank, toBank, amount) {
+            if (fromBank === toBank) return;
+            const from = state.banks.find(b => b.name === fromBank);
+            const to = state.banks.find(b => b.name === toBank);
+            if (!from || !to) return;
             
-            state.debts.push({
+            const value = Number(amount);
+            if ((from.balance || 0) < value) {
+                showToast('❌ Saldo insuficiente!', 'error');
+                return;
+            }
+            
+            from.balance = (from.balance || 0) - value;
+            to.balance = (to.balance || 0) + value;
+            
+            state.transactions.push({
                 id: generateId(),
-                title: state.newDebtTitle.trim(),
-                amount: Number(state.newDebtAmount),
-                bank: state.newDebtBank || state.banks[0]?.name || 'Outro',
-                dueDate: state.newDebtDueDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-                createdAt: new Date().toISOString().split('T')[0],
-                status: 'pending',
+                type: 'transfer',
+                title: `Transferência: ${fromBank} → ${toBank}`,
+                amount: value,
+                date: new Date().toISOString().split('T')[0],
+                fromBank: fromBank,
+                toBank: toBank,
             });
             
-            state.newDebtTitle = '';
-            state.newDebtAmount = '';
-            state.newDebtDueDate = '';
-            
-            showToast('⚠️ Dívida registrada!');
+            showToast(`🔄 Transferência de ${formatCurrency(value)} realizada!`);
             saveState();
             render();
         }
 
-        function removeDebt(id) {
-            if (confirm('Remover esta dívida?')) {
-                state.debts = state.debts.filter(d => d.id !== id);
-                saveState();
-                render();
-            }
-        }
-
-        // ============================================================
-        // FUNÇÃO DE RESET
-        // ============================================================
-        function resetApp() {
-            if (confirm('Tem certeza que deseja reiniciar todos os dados?')) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        // ============================================================
-        // COMPLETAR ONBOARDING
-        // ============================================================
-        function completeOnboarding() {
-            state.firstLogin = false;
-            if (state.loadDemo) {
-                // Adicionar transações demo
-                state.transactions = [
-                    { id: 't1', type: 'income', title: 'Salário Junho', amount: 3200, date: '2026-06-05', categoryOrSource: 'Salário', bank: 'NuBank' },
-                    { id: 't2', type: 'expense', title: 'Supermercado Mensal', amount: 450, date: '2026-06-06', categoryOrSource: 'Alimentação', bank: 'NuBank' },
-                    { id: 't3', type: 'expense', title: 'Combustível Carro', amount: 150, date: '2026-06-08', categoryOrSource: 'Transporte', bank: 'Itaú' },
-                    { id: 't4', type: 'expense', title: 'Cinema e Jantar', amount: 120, date: '2026-06-10', categoryOrSource: 'Lazer', bank: 'NuBank' },
-                    { id: 't5', type: 'expense', title: 'Mensalidade Aluguel', amount: 1400, date: '2026-06-01', categoryOrSource: 'Moradia', bank: 'Itaú' },
-                    { id: 't6', type: 'income', title: 'Consultoria Desenvolvimento', amount: 850, date: '2026-06-12', categoryOrSource: 'Clientes / Freelas', bank: 'Caixa' },
-                    { id: 't7', type: 'expense', title: 'Assinatura Netflix', amount: 45, date: '2026-06-15', categoryOrSource: 'Lazer', bank: 'NuBank' },
-                ];
-                
-                state.pendingReceipts = [
-                    { id: 'p1', title: 'Transferência Pix (Venda notebook)', amount: 1200, source: 'Clientes / Freelas', status: 'processing', date: '2026-06-17' },
-                ];
-                
-                state.receivables = [
-                    { id: 'r1', title: 'Salário Mensal Principal', amount: 3200, dueDate: '2026-07-05', source: 'Salário', reminderActive: true, status: 'pending' },
-                    { id: 'r2', title: 'Projeto Design Figma', amount: 1500, dueDate: '2026-07-15', source: 'Clientes / Freelas', reminderActive: true, status: 'pending' },
-                ];
-            }
-            saveState();
-            render();
-        }
-
-        // ============================================================
-        // RENDERIZADOR PRINCIPAL
-        // ============================================================
-        function render() {
-            document.getElementById('app').innerHTML = state.firstLogin ? renderOnboarding() : renderDashboard();
-        }
-
-        // ============================================================
-        // RENDER ONBOARDING
-        // ============================================================
-        function renderOnboarding() {
-            const pastelColors = [
-                { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-                { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-                { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-                { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-            ];
-
-            const colorOptions = pastelColors.map(c => `<option value="${c.bg}">${c.name}</option>`).join('');
-            const bankOptions = Object.keys(bankColors).map(b => `<option value="${b}">${b}</option>`).join('');
-
-            return `
-                <div class="min-h-screen bg-[#FAF9F6] py-8 px-4 flex flex-col items-center animate-fade-in">
-                    <div class="w-full max-w-5xl">
-                        <!-- Header -->
-                        <div class="text-center mb-8">
-                            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]/40 text-xs font-semibold mb-4">
-                                🏦 Configurar Primeiro Acesso
-                            </div>
-                            <h1 class="text-3xl md:text-4xl font-extrabold text-[#1A1A1A] mb-3">
-                                Bem-vindo ao seu App de Finanças!
-                            </h1>
-                            <p class="text-sm md:text-base text-[#636E72] max-w-2xl mx-auto">
-                                Configure suas contas bancárias, categorias e fontes de renda.
-                            </p>
-                        </div>
-
-                        <!-- Setup Tabs -->
-                        <div class="flex flex-wrap gap-2 justify-center mb-6">
-                            ${['banks', 'categories', 'sources'].map(tab => {
-                                const labels = { banks: '🏦 Bancos', categories: '📂 Categorias', sources: '💰 Fontes' };
-                                const active = state.activeSetupTab === tab ? 'bg-[#E0F2FE] text-[#0369A1]' : 'bg-white text-[#636E72]';
-                                return `
-                                    <button onclick="state.activeSetupTab='${tab}';render()" 
-                                            class="px-4 py-2 text-xs font-bold rounded-xl border ${active} transition-all">
-                                        ${labels[tab]}
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <!-- Conteúdo dos Tabs -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
-                            ${state.activeSetupTab === 'banks' ? `
-                                <div>
-                                    <h3 class="text-sm font-bold mb-4">Contas Bancárias</h3>
-                                    <div class="space-y-2 mb-4">
-                                        ${state.banks.map(bank => `
-                                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="${bank.color} w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                                                        ${bank.icon}
-                                                    </div>
-                                                    <div>
-                                                        <span class="font-bold text-sm">${bank.name}</span>
-                                                        <span class="text-xs text-slate-500 block">Saldo: ${formatCurrency(bank.balance)}</span>
-                                                    </div>
-                                                </div>
-                                                <button onclick="removeBank('${bank.id}')" class="text-red-400 hover:text-red-600">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                                        <line x1="6" y1="6" x2="18" y2="18"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                    <form onsubmit="addBank(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <select onchange="state.newBankName=this.value" class="px-3 py-2 text-sm border rounded-xl">
-                                            <option value="">Selecione um banco...</option>
-                                            ${bankOptions}
-                                        </select>
-                                        <input type="number" placeholder="Saldo inicial" value="${state.newBankBalance}" 
-                                               oninput="state.newBankBalance=Number(this.value)" 
-                                               class="px-3 py-2 text-sm border rounded-xl">
-                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
-                                            + Adicionar Banco
-                                        </button>
-                                    </form>
-                                </div>
-                            ` : ''}
-
-                            ${state.activeSetupTab === 'categories' ? `
-                                <div>
-                                    <h3 class="text-sm font-bold mb-4">Categorias de Gastos</h3>
-                                    <div class="space-y-2 mb-4">
-                                        ${state.categories.map(cat => `
-                                            <div class="flex items-center justify-between p-3 border rounded-xl ${cat.color}">
-                                                <div>
-                                                    <span class="font-bold text-sm">${cat.name}</span>
-                                                    <span class="text-xs opacity-70 block">Limite: ${formatCurrency(cat.limit)}</span>
-                                                </div>
-                                                <button onclick="removeCategory('${cat.id}')" class="text-red-400 hover:text-red-600">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                                        <line x1="6" y1="6" x2="18" y2="18"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                    <form onsubmit="addCategory(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                        <input type="text" required placeholder="Nome" value="${state.newCatName}" 
-                                               oninput="state.newCatName=this.value" 
-                                               class="px-3 py-2 text-sm border rounded-xl">
-                                        <input type="number" required placeholder="Limite R$" value="${state.newCatLimit}" 
-                                               oninput="state.newCatLimit=Number(this.value)" 
-                                               class="px-3 py-2 text-sm border rounded-xl">
-                                        <select onchange="state.newCatColor=this.value" class="px-3 py-2 text-sm border rounded-xl">
-                                            ${colorOptions}
-                                        </select>
-                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
-                                            + Adicionar
-                                        </button>
-                                    </form>
-                                </div>
-                            ` : ''}
-
-                            ${state.activeSetupTab === 'sources' ? `
-                                <div>
-                                    <h3 class="text-sm font-bold mb-4">Fontes de Renda</h3>
-                                    <div class="space-y-2 mb-4">
-                                        ${state.incomeSources.map(src => `
-                                            <div class="flex items-center justify-between p-3 border rounded-xl ${src.color}">
-                                                <div>
-                                                    <span class="font-bold text-sm">${src.name}</span>
-                                                    <span class="text-xs opacity-70 block">Meta: ${formatCurrency(src.expectedAmount)}</span>
-                                                </div>
-                                                <button onclick="removeSource('${src.id}')" class="text-red-400 hover:text-red-600">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                                        <line x1="6" y1="6" x2="18" y2="18"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                    <form onsubmit="addSource(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                        <input type="text" required placeholder="Nome" value="${state.newSrcName}" 
-                                               oninput="state.newSrcName=this.value" 
-                                               class="px-3 py-2 text-sm border rounded-xl">
-                                        <input type="number" required placeholder="Meta R$" value="${state.newSrcExpected}" 
-                                               oninput="state.newSrcExpected=Number(this.value)" 
-                                               class="px-3 py-2 text-sm border rounded-xl">
-                                        <select onchange="state.newSrcColor=this.value" class="px-3 py-2 text-sm border rounded-xl">
-                                            ${colorOptions}
-                                        </select>
-                                        <button type="submit" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
-                                            + Adicionar
-                                        </button>
-                                    </form>
-                                </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- Demo checkbox -->
-                        <div class="flex flex-col items-center gap-3 mb-8">
-                            <label class="inline-flex items-center gap-2.5 cursor-pointer">
-                                <input type="checkbox" ${state.loadDemo ? 'checked' : ''} 
-                                       onchange="state.loadDemo=this.checked" 
-                                       class="w-4.5 h-4.5 accent-sky-600 rounded">
-                                <span class="text-xs font-bold text-slate-700">Carregar dados de demonstração</span>
-                            </label>
-                            <p class="text-[10px] text-slate-400">
-                                Inclui bancos, transações e agendamentos de exemplo
-                            </p>
-                        </div>
-
-                        <!-- Botão Iniciar -->
-                        <button onclick="completeOnboarding()" 
-                                class="w-full sm:w-auto bg-[#BAE6FD] hover:bg-[#7DD3FC] text-[#0369A1] text-lg font-bold py-4 px-12 rounded-full border-b-4 border-[#7DD3FC] shadow-lg active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-3 mx-auto">
-                            <span>🚀 Começar a Usar!</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ============================================================
-        // RENDER DASHBOARD
-        // ============================================================
-        function renderDashboard() {
-            const totalBalance = getTotalBalance();
-            const totalDebts = getTotalDebts();
-            const netWorth = getNetWorth();
-            
-            const hasDebts = totalDebts > 0;
-            const isNegative = netWorth < 0;
-
-            // Calcular gastos por categoria
-            const categorySpending = state.categories.map(cat => ({
-                ...cat,
-                spent: state.transactions.filter(t => t.type === 'expense' && t.categoryOrSource === cat.name)
-                    .reduce((s, t) => s + Number(t.amount), 0)
-            }));
-
-            const hasOverBudget = categorySpending.some(c => c.spent > c.limit);
-
-            // Toast
-            const toastHTML = state.toast ? `
-                <div class="fixed bottom-6 right-6 z-50 bg-[#2D3436] text-[#FAF9F6] rounded-2xl p-4 shadow-2xl border border-slate-700/50 flex items-center gap-3 max-w-sm animate-pop-in">
-                    <div class="p-1 rounded-full ${state.toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'} text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            ${state.toast.type === 'error' ? 
-                                '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' :
-                                '<polyline points="20 6 9 17 4 12"/>'
-                            }
-                        </svg>
-                    </div>
-                    <p class="text-xs font-bold">${state.toast.message}</p>
-                </div>
-            ` : '';
-
-            // Modal
-            const modalHTML = state.showModal ? `
-                <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
-                    <div class="bg-white rounded-3xl w-full max-w-md p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-extrabold text-lg">Novo Lançamento</h3>
-                            <button onclick="state.showModal=false;render()" class="text-slate-400 hover:text-slate-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                    <line x1="18" y1="6" x2="6" y2="18"/>
-                                    <line x1="6" y1="6" x2="18" y2="18"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <form onsubmit="createTransaction(event)">
-                            <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-4">
-                                <button type="button" onclick="state.modalType='expense';render()" 
-                                        class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'expense' ? 'bg-[#ECF5FC] text-sky-800' : 'text-slate-500'}">
-                                    💸 Gasto
-                                </button>
-                                <button type="button" onclick="state.modalType='income';render()" 
-                                        class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'income' ? 'bg-[#EAF7EE] text-emerald-800' : 'text-slate-500'}">
-                                    💰 Receita
-                                </button>
-                            </div>
-                            
-                            <input type="text" required placeholder="Descrição" value="${state.modalTitle}" 
-                                   oninput="state.modalTitle=this.value" 
-                                   class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
-                            
-                            <div class="grid grid-cols-2 gap-3 mb-3">
-                                <input type="number" required placeholder="Valor" value="${state.modalAmount}" 
-                                       oninput="state.modalAmount=this.value" 
-                                       class="px-3 py-2 text-sm border rounded-xl">
-                                <input type="date" value="${state.modalDate}" 
-                                       oninput="state.modalDate=this.value" 
-                                       class="px-3 py-2 text-sm border rounded-xl">
-                            </div>
-                            
-                            <select onchange="state.modalCategory=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
-                                <option value="">Selecione uma categoria...</option>
-                                ${(state.modalType === 'expense' ? state.categories : state.incomeSources).map(item => 
-                                    `<option value="${item.name}">${item.name}</option>`
-                                ).join('')}
-                            </select>
-                            
-                            <select onchange="state.modalBank=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-4">
-                                <option value="">Selecione um banco...</option>
-                                ${state.banks.map(b => `<option value="${b.name}">${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
-                            </select>
-                            
-                            <button type="submit" class="w-full py-3 text-white font-bold text-sm rounded-xl ${state.modalType === 'expense' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700'} transition-all">
-                                Registrar Lançamento
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            ` : '';
-
-            // Seção de Dívidas
-            const debtsHTML = state.debts.length > 0 ? `
-                <div class="bg-white rounded-3xl border-2 border-red-200 shadow-sm overflow-hidden">
-                    <div class="bg-red-50 border-b border-red-200 p-4">
-                        <h3 class="font-extrabold text-red-800 flex items-center gap-2">
-                            ⚠️ Dívidas Registradas
-                            <span class="debt-tag">${state.debts.length}</span>
-                        </h3>
-                    </div>
-                    <div class="p-4 space-y-2">
-                        ${state.debts.map(debt => `
-                            <div class="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-xl animate-slide-down">
-                                <div>
-                                    <span class="font-bold text-sm text-red-800">${debt.title}</span>
-                                    <span class="text-xs text-red-600 block">${debt.bank} • Vence: ${debt.dueDate}</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="font-bold text-red-600">${formatCurrency(debt.amount)}</span>
-                                    <button onclick="payDebt('${debt.id}')" class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-200 transition-all">
-                                        Pagar
-                                    </button>
-                                    <button onclick="removeDebt('${debt.id}')" class="text-red-300 hover:text-red-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <line x1="18" y1="6" x2="6" y2="18"/>
-                                            <line x1="6" y1="6" x2="18" y2="18"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : '';
-
-            // Seção de Transferência entre bancos
-            const transferHTML = state.banks.length >= 2 ? `
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
-                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">🔄 Transferir entre Bancos</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <select id="transferFrom" class="px-3 py-2 text-sm border rounded-xl">
-                            ${state.banks.map(b => `<option value="${b.name}">${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
-                        </select>
-                        <select id="transferTo" class="px-3 py-2 text-sm border rounded-xl">
-                            ${state.banks.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
-                        </select>
-                        <input type="number" id="transferAmount" placeholder="Valor" class="px-3 py-2 text-sm border rounded-xl">
-                        <button onclick="doTransfer()" class="bg-[#E0F2FE] text-[#0369A1] font-bold text-sm py-2 rounded-xl hover:bg-[#BAE6FD] transition-all">
-                            Transferir
-                        </button>
-                    </div>
-                </div>
-            ` : '';
-
-            // ============================================================
-            // LISTA DE TRANSAÇÕES FILTRADA
-            // ============================================================
-            const filteredTransactions = state.transactions
-                .filter(t => t.title.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
-                             t.categoryOrSource?.toLowerCase().includes(state.searchTerm.toLowerCase()))
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            return `
-                <div class="min-h-screen bg-[#FAF9F6] animate-fade-in">
-                    ${toastHTML}
-                    ${modalHTML}
-
-                    <!-- Header -->
-                    <header class="bg-white border-b border-slate-200/60 sticky top-0 z-40 backdrop-blur-md bg-white/95 shadow-sm">
-                        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-2xl bg-[#D3E8FA] border border-sky-300 flex items-center justify-center text-sky-800">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <path d="M12 3v1m0 16v1M4 12H3m18 0h-1M18.364 5.636l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h1 class="text-lg font-extrabold text-[#1A1A1A]">Finanças</h1>
-                                    <p class="text-[10px] text-slate-500">Gestão de Contas</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center gap-2 flex-wrap justify-center">
-                                <button onclick="state.modalType='expense';state.showModal=true;render()" 
-                                        class="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl flex items-center gap-1 transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <line x1="12" y1="5" x2="12" y2="19"/>
-                                        <line x1="5" y1="12" x2="19" y2="12"/>
-                                    </svg>
-                                    Registrar
-                                </button>
-                                <button onclick="resetApp()" 
-                                        class="px-3 py-1.5 text-xs font-bold text-purple-700 bg-[#F5EEFB] border border-purple-200/40 rounded-xl flex items-center gap-1 transition-all">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <path d="M1 4v6h6M2.05 13.5a9 9 0 1 1 .55-5.5L1 10"/>
-                                    </svg>
-                                    Reset
-                                </button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <!-- Main -->
-                    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
-                        
-                        <!-- Cards de Resumo -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold">Saldo Total</p>
-                                <p class="text-2xl font-extrabold ${totalBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}">
-                                    ${formatCurrency(totalBalance)}
-                                </p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold">Dívidas</p>
-                                <p class="text-2xl font-extrabold text-red-600">
-                                    ${formatCurrency(totalDebts)}
-                                </p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold">Patrimônio</p>
-                                <p class="text-2xl font-extrabold ${netWorth >= 0 ? 'text-emerald-600' : 'text-red-600'}">
-                                    ${formatCurrency(netWorth)}
-                                </p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold">Transações</p>
-                                <p class="text-2xl font-extrabold text-slate-700">
-                                    ${state.transactions.length}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Alerta de Patrimônio Negativo -->
-                        ${isNegative ? `
-                            <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-4 flex items-start gap-3 animate-fade-in">
-                                <div class="text-2xl">🚨</div>
-                                <div>
-                                    <h3 class="font-extrabold text-red-800">Patrimônio Negativo!</h3>
-                                    <p class="text-sm text-red-700">
-                                        Suas dívidas (${formatCurrency(totalDebts)}) são maiores que seu saldo total (${formatCurrency(totalBalance)}).
-                                        <br>Recomendamos pagar as dívidas prioritariamente.
-                                    </p>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${hasOverBudget ? `
-                            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex items-start gap-3">
-                                <div class="text-2xl">⚠️</div>
-                                <div>
-                                    <h3 class="font-extrabold text-amber-800">Orçamento Excedido!</h3>
-                                    <p class="text-sm text-amber-700">
-                                        ${categorySpending.filter(c => c.spent > c.limit).map(c => 
-                                            `${c.name}: ${formatCurrency(c.spent)} > ${formatCurrency(c.limit)}`
-                                        ).join(' • ')}
-                                    </p>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${debtsHTML}
-
-                        <!-- Transferência entre Bancos -->
-                        ${transferHTML}
-
-                        <!-- Saldos dos Bancos -->
-                        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                            <div class="bg-[#FAF9F6] border-b border-slate-200 p-4">
-                                <h3 class="font-bold text-sm flex items-center gap-2">
-                                    🏦 Contas Bancárias
-                                    <span class="text-xs text-slate-400">${state.banks.length} contas</span>
-                                </h3>
-                            </div>
-                            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                ${state.banks.map(bank => {
-                                    const isNegative = bank.balance < 0;
-                                    return `
-                                        <div class="p-4 border rounded-2xl ${isNegative ? 'border-red-300 bg-red-50' : 'border-slate-200'}">
-                                            <div class="flex items-center gap-3">
-                                                <div class="${bank.color} w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold">
-                                                    ${bank.icon}
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h4 class="font-bold text-sm">${bank.name}</h4>
-                                                    <p class="${isNegative ? 'negative-balance' : 'positive-balance'} text-lg">
-                                                        ${formatCurrency(bank.balance)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-
-                        <!-- Navegação de Seções -->
-                        <div class="flex flex-wrap gap-2">
-                            ${['overview', 'expenses', 'income', 'pending', 'receivables'].map(section => {
-                                const labels = { overview: '📊 Geral', expenses: '💸 Gastos', income: '💰 Receitas', pending: '⏳ Pendentes', receivables: '📅 Agendados' };
-                                const isActive = state.focusedSection === section;
-                                return `
-                                    <button onclick="state.focusedSection='${section}';render()" 
-                                            class="px-4 py-2 text-xs font-bold rounded-xl border transition-all ${isActive ? 'bg-[#E0F2FE] border-sky-300 text-[#0369A1]' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}">
-                                        ${labels[section]}
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <!-- Conteúdo das Seções -->
-                        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                            <div class="p-4">
-                                <!-- Busca -->
-                                <div class="relative mb-4">
-                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                        <circle cx="11" cy="11" r="8"/>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                                    </svg>
-                                    <input type="text" placeholder="Buscar transações..." value="${state.searchTerm}" 
-                                           oninput="state.searchTerm=this.value;render()" 
-                                           class="w-full pl-9 pr-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-200">
-                                </div>
-
-                                <!-- Lista de Transações -->
-                                <div class="space-y-2 max-h-[500px] overflow-y-auto">
-                                    ${filteredTransactions.length === 0 ? 
-                                        '<div class="text-center py-8 text-slate-400 text-sm">Nenhuma transação encontrada</div>' :
-                                        filteredTransactions.map(tx => {
-                                            const isIncome = tx.type === 'income';
-                                            const isTransfer = tx.type === 'transfer';
-                                            return `
-                                                <div class="flex items-center justify-between p-3 bg-white border rounded-xl hover:shadow-sm transition-all">
-                                                    <div class="flex-1 min-w-0">
-                                                        <span class="font-bold text-sm block truncate">${tx.title}</span>
-                                                        <span class="text-[10px] text-slate-400">
-                                                            ${tx.categoryOrSource || tx.fromBank || ''} • ${tx.date} 
-                                                            ${tx.bank ? `• ${tx.bank}` : ''}
-                                                            ${tx.fromBank ? `• ${tx.fromBank} → ${tx.toBank}` : ''}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex items-center gap-3 ml-2">
-                                                        <span class="text-sm font-bold ${isIncome ? 'text-emerald-600' : isTransfer ? 'text-blue-600' : 'text-red-600'}">
-                                                            ${isIncome ? '+' : isTransfer ? '🔄' : '-'}${formatCurrency(tx.amount)}
-                                                        </span>
-                                                        <button onclick="deleteTransaction('${tx.id}')" class="text-slate-300 hover:text-red-600 transition-all">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                                                <line x1="6" y1="6" x2="18" y2="18"/>
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            `;
-                                        }).join('')
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                    </main>
-
-                    <!-- Footer -->
-                    <footer class="bg-white border-t py-4 mt-8 text-center text-[10px] text-slate-400">
-                        <p>© 2026 Finanças Bento Grid • Gestão de Contas e Dívidas</p>
-                    </footer>
-                </div>
-            `;
-        }
-
-        // ============================================================
-        // FUNÇÃO DE TRANSFERÊNCIA (Chamada pelo onclick)
-        // ============================================================
         function doTransfer() {
             const from = document.getElementById('transferFrom')?.value;
             const to = document.getElementById('transferTo')?.value;
@@ -1220,6 +943,572 @@
         }
 
         // ============================================================
+        // FUNÇÕES DE NAVEGAÇÃO
+        // ============================================================
+        function goToHome() {
+            state.firstLogin = true;
+            saveState();
+            render();
+            showToast('🏠 Voltando para configuração');
+        }
+
+        function completeOnboarding() {
+            state.firstLogin = false;
+            saveState();
+            render();
+            showToast('🚀 App pronto!');
+        }
+
+        function resetApp() {
+            if (confirm('Resetar todos os dados?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // ============================================================
+        // RENDERIZADOR
+        // ============================================================
+        function render() {
+            document.getElementById('app').innerHTML = state.firstLogin ? renderOnboarding() : renderDashboard();
+        }
+
+        // ============================================================
+        // RENDER ONBOARDING
+        // ============================================================
+        function renderOnboarding() {
+            const bankOptions = Object.keys(bankColors).map(b => `<option value="${b}">${b}</option>`).join('');
+            const pastelColors = [
+                { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
+                { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
+                { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
+                { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
+            ];
+            const colorOptions = pastelColors.map(c => `<option value="${c.bg}">${c.name}</option>`).join('');
+
+            return `
+                <div class="max-w-4xl mx-auto p-6 animate-fade-in">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-extrabold text-[#1A1A1A]">🏦 Configurar Finanças</h1>
+                        <p class="text-gray-500 mt-2">Adicione seus bancos, categorias e fontes de renda</p>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="card text-center">
+                            <p class="text-2xl font-bold text-purple-600">${state.banks.length}</p>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Bancos</p>
+                        </div>
+                        <div class="card text-center">
+                            <p class="text-2xl font-bold text-sky-600">${state.categories.length}</p>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Categorias</p>
+                        </div>
+                        <div class="card text-center">
+                            <p class="text-2xl font-bold text-emerald-600">${state.incomeSources.length}</p>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Fontes</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex gap-2 mb-6 flex-wrap">
+                        <button onclick="state.activeSetupTab='banks';render()" 
+                                class="btn ${state.activeSetupTab === 'banks' ? 'btn-primary' : 'bg-gray-100 text-gray-600'}">
+                            🏦 Bancos
+                        </button>
+                        <button onclick="state.activeSetupTab='categories';render()" 
+                                class="btn ${state.activeSetupTab === 'categories' ? 'btn-primary' : 'bg-gray-100 text-gray-600'}">
+                            📂 Categorias
+                        </button>
+                        <button onclick="state.activeSetupTab='sources';render()" 
+                                class="btn ${state.activeSetupTab === 'sources' ? 'btn-primary' : 'bg-gray-100 text-gray-600'}">
+                            💰 Fontes
+                        </button>
+                    </div>
+
+                    <!-- Conteúdo -->
+                    <div class="card">
+                        ${state.activeSetupTab === 'banks' ? `
+                            <h3 class="font-bold mb-4">Contas Bancárias</h3>
+                            
+                            ${state.banks.length > 0 ? `
+                                <div class="space-y-2 mb-4">
+                                    ${state.banks.map(b => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border">
+                                            <div class="flex items-center gap-3">
+                                                <div class="${b.color} w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold">${b.icon}</div>
+                                                <div>
+                                                    <span class="font-bold">${b.name}</span>
+                                                    <span class="text-xs text-gray-500 block">Saldo: ${formatCurrency(b.balance)}</span>
+                                                </div>
+                                            </div>
+                                            <button onclick="deleteBank('${b.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `<p class="text-gray-400 text-sm mb-4">Nenhum banco cadastrado.</p>`}
+                            
+                            <div class="grid grid-cols-3 gap-3">
+                                <select id="bankNameInput" class="input-field col-span-1">
+                                    <option value="">Selecione um banco...</option>
+                                    ${bankOptions}
+                                </select>
+                                <input id="bankBalanceInput" type="number" placeholder="Saldo inicial" class="input-field col-span-1">
+                                <button onclick="addBank()" class="btn btn-primary col-span-1">+ Adicionar</button>
+                            </div>
+                        ` : ''}
+
+                        ${state.activeSetupTab === 'categories' ? `
+                            <h3 class="font-bold mb-4">Categorias de Gastos</h3>
+                            
+                            ${state.categories.length > 0 ? `
+                                <div class="space-y-2 mb-4">
+                                    ${state.categories.map(c => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border">
+                                            <div>
+                                                <span class="font-bold">${c.name}</span>
+                                                <span class="text-xs text-gray-500 block">Limite: ${formatCurrency(c.limit)}</span>
+                                            </div>
+                                            <button onclick="deleteCategory('${c.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `<p class="text-gray-400 text-sm mb-4">Nenhuma categoria cadastrada.</p>`}
+                            
+                            <div class="grid grid-cols-3 gap-3">
+                                <input id="catNameInput" type="text" placeholder="Nome da categoria" class="input-field col-span-1">
+                                <input id="catLimitInput" type="number" placeholder="Limite R$" class="input-field col-span-1">
+                                <button onclick="addCategory()" class="btn btn-primary col-span-1">+ Adicionar</button>
+                            </div>
+                        ` : ''}
+
+                        ${state.activeSetupTab === 'sources' ? `
+                            <h3 class="font-bold mb-4">Fontes de Renda</h3>
+                            
+                            ${state.incomeSources.length > 0 ? `
+                                <div class="space-y-2 mb-4">
+                                    ${state.incomeSources.map(s => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border">
+                                            <div>
+                                                <span class="font-bold">${s.name}</span>
+                                                <span class="text-xs text-gray-500 block">Meta: ${formatCurrency(s.expectedAmount)}</span>
+                                            </div>
+                                            <button onclick="deleteSource('${s.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `<p class="text-gray-400 text-sm mb-4">Nenhuma fonte cadastrada.</p>`}
+                            
+                            <div class="grid grid-cols-3 gap-3">
+                                <input id="srcNameInput" type="text" placeholder="Nome da fonte" class="input-field col-span-1">
+                                <input id="srcExpectedInput" type="number" placeholder="Meta R$" class="input-field col-span-1">
+                                <button onclick="addSource()" class="btn btn-primary col-span-1">+ Adicionar</button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <button onclick="completeOnboarding()" class="btn btn-primary w-full mt-6 py-4 text-lg">
+                        🚀 Começar a Usar!
+                    </button>
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // RENDER DASHBOARD - COMPLETO
+        // ============================================================
+        function renderDashboard() {
+            const totalBalance = getTotalBalance();
+            const totalDebts = getTotalDebts();
+            const netWorth = getNetWorth();
+            const isNegative = netWorth < 0;
+            const isEmpty = state.transactions.length === 0;
+
+            // Toast
+            const toastHTML = state.toast ? `
+                <div class="fixed bottom-6 right-6 z-50 bg-[#2D3436] text-white rounded-2xl p-4 shadow-2xl flex items-center gap-3 max-w-sm animate-pop-in">
+                    <div class="p-1 rounded-full ${state.toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            ${state.toast.type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' : '<polyline points="20 6 9 17 4 12"/>'}
+                        </svg>
+                    </div>
+                    <p class="text-xs font-bold">${state.toast.message}</p>
+                </div>
+            ` : '';
+
+            // Modal de Transação
+            const modalTitle = state.isEditing ? '✏️ Editar Transação' : '📝 Novo Lançamento';
+            const modalButtonText = state.isEditing ? 'Salvar Alterações' : 'Registrar Lançamento';
+
+            const modalHTML = state.showModal ? `
+                <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+                    <div class="bg-white rounded-3xl w-full max-w-md p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-extrabold text-lg">${modalTitle}</h3>
+                            <button onclick="state.showModal=false;state.isEditing=false;state.editingId=null;render()" class="text-slate-400 hover:text-slate-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <form onsubmit="submitTransaction(event)">
+                            <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-4">
+                                <button type="button" onclick="state.modalType='expense';render()" 
+                                        class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'expense' ? 'bg-[#ECF5FC] text-sky-800' : 'text-slate-500'}">💸 Gasto</button>
+                                <button type="button" onclick="state.modalType='income';render()" 
+                                        class="py-2 text-xs font-bold rounded-lg ${state.modalType === 'income' ? 'bg-[#EAF7EE] text-emerald-800' : 'text-slate-500'}">💰 Receita</button>
+                            </div>
+                            
+                            <input type="text" required placeholder="Descrição" value="${state.modalTitle}" 
+                                   oninput="state.modalTitle=this.value" 
+                                   class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <input type="number" required placeholder="Valor" value="${state.modalAmount}" 
+                                       oninput="state.modalAmount=this.value" 
+                                       class="px-3 py-2 text-sm border rounded-xl">
+                                <input type="date" value="${state.modalDate}" 
+                                       oninput="state.modalDate=this.value" 
+                                       class="px-3 py-2 text-sm border rounded-xl">
+                            </div>
+                            
+                            <select onchange="state.modalCategory=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-3">
+                                <option value="">Selecione uma categoria...</option>
+                                ${(state.modalType === 'expense' ? state.categories : state.incomeSources).map(item => 
+                                    `<option value="${item.name}" ${item.name === state.modalCategory ? 'selected' : ''}>${item.name}</option>`
+                                ).join('')}
+                            </select>
+                            
+                            <select onchange="state.modalBank=this.value" class="w-full px-3 py-2 text-sm border rounded-xl mb-4">
+                                <option value="">Selecione um banco...</option>
+                                ${state.banks.map(b => `<option value="${b.name}" ${b.name === state.modalBank ? 'selected' : ''}>${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
+                            </select>
+                            
+                            <button type="submit" class="w-full py-3 text-white font-bold text-sm rounded-xl ${state.modalType === 'expense' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700'} transition-all">
+                                ${modalButtonText}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            ` : '';
+
+            // Modal de Opções de Pagamento
+            const paymentOptionsHTML = state.showPaymentOptions ? `
+                <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+                    <div class="bg-white rounded-3xl w-full max-w-lg p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-extrabold text-lg">⚠️ Saldo Insuficiente</h3>
+                            <button onclick="cancelTransaction()" class="text-slate-400 hover:text-slate-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                            <p class="text-sm text-red-800">
+                                <span class="font-bold">${state.paymentTitle}</span> <br>
+                                Valor: <span class="font-bold">${formatCurrency(state.paymentAmount)}</span><br>
+                                Banco: <span class="font-bold">${state.selectedBank}</span><br>
+                                Saldo disponível: <span class="font-bold text-red-600">${formatCurrency(getBankBalance(state.selectedBank))}</span><br>
+                                Déficit: <span class="font-bold text-red-600">${formatCurrency(state.paymentAmount - getBankBalance(state.selectedBank))}</span>
+                            </p>
+                        </div>
+
+                        <p class="text-sm font-semibold text-slate-700 mb-4">Como deseja pagar?</p>
+
+                        <div class="space-y-3">
+                            <div onclick="payWithOtherBank()" class="option-card flex items-center gap-4">
+                                <div class="icon">🔄</div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm">Pagar com outro banco</h4>
+                                    <p class="text-xs text-slate-500">Transferir de outra conta para cobrir o déficit</p>
+                                </div>
+                            </div>
+
+                            <div onclick="setupInstallment()" class="option-card flex items-center gap-4">
+                                <div class="icon">📅</div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm">Parcelar</h4>
+                                    <p class="text-xs text-slate-500">Dividir o valor em até 12x sem juros</p>
+                                </div>
+                            </div>
+
+                            <div onclick="cancelTransaction()" class="option-card flex items-center gap-4 border-red-200 hover:border-red-400 hover:bg-red-50">
+                                <div class="icon">❌</div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm text-red-600">Cancelar transação</h4>
+                                    <p class="text-xs text-slate-500">Não registrar este gasto agora</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ` : '';
+
+            // ============================================================
+            // SEÇÃO DE DÍVIDAS
+            // ============================================================
+            const debtsHTML = `
+                <div class="card mb-6 ${state.debts.length > 0 ? 'border-2 border-red-200' : ''}">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold ${state.debts.length > 0 ? 'text-red-800' : ''}">
+                            ${state.debts.length > 0 ? '⚠️' : '✅'} Dívidas
+                            ${state.debts.length > 0 ? `<span class="debt-tag">${state.debts.length}</span>` : ''}
+                        </h3>
+                        <button onclick="document.getElementById('form-add-debt').style.display='block'" 
+                                class="text-sm text-gray-500 hover:text-gray-700">
+                            + Adicionar
+                        </button>
+                    </div>
+                    
+                    <div id="form-add-debt" style="display:none;" class="bg-slate-50 p-4 rounded-xl mb-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <input type="text" id="debtTitleInput" placeholder="Título" class="input-field">
+                            <input type="number" id="debtAmountInput" placeholder="Valor" class="input-field">
+                            <select id="debtBankInput" class="input-field">
+                                <option value="">Banco</option>
+                                ${state.banks.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <button onclick="addManualDebtFromInputs()" class="btn btn-danger mt-2">Registrar Dívida</button>
+                    </div>
+
+                    ${state.debts.length === 0 ? `
+                        <p class="text-gray-400 text-sm">Nenhuma dívida ativa</p>
+                    ` : state.debts.map(debt => {
+                        const isInstallment = debt.installmentCount && debt.installmentCount > 1;
+                        const progress = isInstallment ? ((debt.paidInstallments || 0) / debt.installmentCount * 100) : 0;
+                        const remaining = debt.amount - ((debt.paidInstallments || 0) * (debt.installmentValue || debt.amount / debt.installmentCount));
+                        
+                        return `
+                            <div class="flex flex-col p-3 bg-red-50 border border-red-200 rounded-xl mb-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-bold text-sm text-red-800">${debt.title}</span>
+                                        <div class="flex gap-2 text-xs text-red-600">
+                                            <span>${debt.bank}</span>
+                                            <span>Vence: ${debt.dueDate}</span>
+                                            ${isInstallment ? `<span>${debt.paidInstallments || 0}/${debt.installmentCount}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-bold text-red-600">${formatCurrency(remaining)}</span>
+                                        <button onclick="deleteDebt('${debt.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                    </div>
+                                </div>
+                                
+                                ${isInstallment ? `
+                                    <div class="w-full h-2 bg-red-200 rounded-full mt-2">
+                                        <div class="h-full bg-red-500 rounded-full" style="width: ${progress}%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                        <span>${progress.toFixed(0)}% pago</span>
+                                        <span>Parcela: ${formatCurrency(debt.installmentValue || debt.amount / debt.installmentCount)}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="flex gap-2 mt-2">
+                                    ${isInstallment ? `
+                                        <button onclick="payInstallment('${debt.id}')" class="btn-pagar flex-1 text-center">Pagar Parcela</button>
+                                    ` : ''}
+                                    <button onclick="payFullDebt('${debt.id}')" class="flex-1 bg-emerald-100 text-emerald-700 font-bold text-xs py-2 rounded-lg border border-emerald-300 hover:bg-emerald-200 text-center">
+                                        Quitar Total
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            // Função para adicionar dívida manual
+            window.addManualDebtFromInputs = function() {
+                const title = document.getElementById('debtTitleInput')?.value;
+                const amount = document.getElementById('debtAmountInput')?.value;
+                const bank = document.getElementById('debtBankInput')?.value;
+                
+                if (!title || !amount) {
+                    showToast('❌ Preencha título e valor!', 'error');
+                    return;
+                }
+                
+                state.debts.push({
+                    id: generateId(),
+                    title: title.trim(),
+                    amount: Number(amount),
+                    bank: bank || state.banks[0]?.name || 'Outro',
+                    dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                    createdAt: new Date().toISOString().split('T')[0],
+                    status: 'pending',
+                    installmentCount: 1,
+                    installmentValue: Number(amount),
+                    paidInstallments: 0,
+                    originalTitle: title.trim(),
+                });
+                
+                document.getElementById('debtTitleInput').value = '';
+                document.getElementById('debtAmountInput').value = '';
+                document.getElementById('debtBankInput').value = '';
+                
+                showToast('⚠️ Dívida registrada!');
+                saveState();
+                render();
+            };
+
+            // ============================================================
+            // TRANSFERÊNCIA ENTRE BANCOS
+            // ============================================================
+            const transferHTML = state.banks.length >= 2 ? `
+                <div class="card mb-6">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">🔄 Transferir entre Bancos</h4>
+                    <div class="grid grid-cols-4 gap-3">
+                        <select id="transferFrom" class="input-field">
+                            ${state.banks.map(b => `<option value="${b.name}">${b.name} (${formatCurrency(b.balance)})</option>`).join('')}
+                        </select>
+                        <select id="transferTo" class="input-field">
+                            ${state.banks.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
+                        </select>
+                        <input type="number" id="transferAmount" placeholder="Valor" class="input-field">
+                        <button onclick="doTransfer()" class="btn btn-primary">Transferir</button>
+                    </div>
+                </div>
+            ` : '';
+
+            // ============================================================
+            // LISTA DE TRANSAÇÕES
+            // ============================================================
+            const filteredTransactions = state.transactions
+                .filter(t => t.title.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                             t.categoryOrSource?.toLowerCase().includes(state.searchTerm.toLowerCase()))
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // ============================================================
+            // RENDER COMPLETO
+            // ============================================================
+            return `
+                <div class="max-w-6xl mx-auto p-6 animate-fade-in">
+                    ${toastHTML}
+                    ${modalHTML}
+                    ${paymentOptionsHTML}
+
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 class="text-2xl font-extrabold">💰 Finanças</h1>
+                            <p class="text-sm text-gray-500">Gestão de Saldo e Parcelas</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="goToHome()" class="btn btn-primary">🏠 Configurar</button>
+                            <button onclick="state.modalType='expense';state.isEditing=false;state.editingId=null;state.showModal=true;render()" 
+                                    class="btn btn-success">+ Registrar</button>
+                            <button onclick="resetApp()" class="btn btn-danger">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Cards de Resumo -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="card">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Saldo Total</p>
+                            <p class="text-2xl font-bold ${totalBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatCurrency(totalBalance)}</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Dívidas</p>
+                            <p class="text-2xl font-bold text-red-600">${formatCurrency(totalDebts)}</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Patrimônio</p>
+                            <p class="text-2xl font-bold ${netWorth >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatCurrency(netWorth)}</p>
+                        </div>
+                        <div class="card">
+                            <p class="text-xs text-gray-500 uppercase font-bold">Transações</p>
+                            <p class="text-2xl font-bold">${state.transactions.length}</p>
+                        </div>
+                    </div>
+
+                    ${isNegative ? `
+                        <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                            <div class="text-2xl">🚨</div>
+                            <div>
+                                <h3 class="font-extrabold text-red-800">Patrimônio Negativo!</h3>
+                                <p class="text-sm text-red-700">Dívidas (${formatCurrency(totalDebts)}) > Saldo (${formatCurrency(totalBalance)})</p>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${debtsHTML}
+                    ${transferHTML}
+
+                    <!-- Bancos -->
+                    <div class="card mb-6">
+                        <h3 class="font-bold mb-4">🏦 Contas Bancárias</h3>
+                        ${state.banks.length === 0 ? `
+                            <p class="text-gray-400 text-sm">Nenhum banco cadastrado. <button onclick="goToHome()" class="text-sky-600 font-bold">Configure aqui</button></p>
+                        ` : `
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${state.banks.map(b => `
+                                    <div class="p-4 border rounded-xl ${b.balance < 0 ? 'border-red-300 bg-red-50' : 'border-gray-200'}">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="${b.color} w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold">${b.icon}</div>
+                                                <div>
+                                                    <h4 class="font-bold">${b.name}</h4>
+                                                    <p class="${b.balance < 0 ? 'negative-balance' : 'positive-balance'}">${formatCurrency(b.balance)}</p>
+                                                </div>
+                                            </div>
+                                            <button onclick="deleteBank('${b.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Busca e Transações -->
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold">📊 Transações</h3>
+                            <input type="text" placeholder="Buscar..." value="${state.searchTerm}" 
+                                   oninput="state.searchTerm=this.value;render()" 
+                                   class="input-field max-w-xs">
+                        </div>
+
+                        ${state.transactions.length === 0 ? `
+                            <p class="text-gray-400 text-sm">Nenhuma transação registrada.</p>
+                        ` : `
+                            <div class="space-y-2 max-h-[400px] overflow-y-auto">
+                                ${filteredTransactions.map(tx => {
+                                    const isIncome = tx.type === 'income';
+                                    const isTransfer = tx.type === 'transfer';
+                                    return `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border hover:shadow-sm transition-all">
+                                            <div class="flex-1 min-w-0">
+                                                <span class="font-bold text-sm block truncate">${tx.title}</span>
+                                                <span class="text-xs text-gray-500">
+                                                    ${tx.categoryOrSource || tx.fromBank || ''} • ${tx.date}
+                                                    ${tx.bank ? `• ${tx.bank}` : ''}
+                                                    ${tx.fromBank ? `• ${tx.fromBank} → ${tx.toBank}` : ''}
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-2 ml-2">
+                                                <span class="text-sm font-bold ${isIncome ? 'text-emerald-600' : isTransfer ? 'text-blue-600' : 'text-red-600'}">
+                                                    ${isIncome ? '+' : isTransfer ? '🔄' : '-'}${formatCurrency(tx.amount)}
+                                                </span>
+                                                <button onclick="startEditTransaction('${tx.id}')" class="text-blue-400 hover:text-blue-600">✏️</button>
+                                                <button onclick="deleteTransaction('${tx.id}')" class="text-gray-400 hover:text-red-500">✕</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `}
+                    </div>
+
+                    <p class="text-center text-xs text-gray-400 mt-8">© 2026 Finanças • Gestão de Saldo e Parcelas</p>
+                </div>
+            `;
+        }
+
+        // ============================================================
         // INICIALIZAÇÃO
         // ============================================================
         const hasSaved = loadState();
@@ -1229,7 +1518,9 @@
             state.incomeSources = [...DEFAULT_INCOME_SOURCES];
         }
         render();
+        console.log('🚀 App iniciado!');
+        console.log('📊 Estado:', state);
     </script>
 </body>
 </html>
-                
+    
