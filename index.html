@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finanças • Gestão de Saldo e Parcelas</title>
+    <title>Easy Finances • Gestão de Saldo e Parcelas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -109,7 +109,7 @@
         };
 
         const generateId = () => {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 8);
         };
 
         const bankColors = {
@@ -119,11 +119,21 @@
         };
 
         // ============================================================
-        // DADOS PADRÃO - VAZIOS
+        // DADOS PADRÃO
         // ============================================================
-        const DEFAULT_BANKS = [];
-        const DEFAULT_CATEGORIES = [];
-        const DEFAULT_INCOME_SOURCES = [];
+        const DEFAULT_BANKS = [
+            { id: generateId(), name: 'NuBank', balance: 1500, color: 'bg-purple-600', icon: 'N' },
+            { id: generateId(), name: 'Itaú', balance: 2500, color: 'bg-orange-600', icon: 'I' }
+        ];
+        const DEFAULT_CATEGORIES = [
+            { id: generateId(), name: 'Alimentação', limit: 800, spent: 0, color: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
+            { id: generateId(), name: 'Transporte', limit: 400, spent: 0, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
+            { id: generateId(), name: 'Lazer', limit: 300, spent: 0, color: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' }
+        ];
+        const DEFAULT_INCOME_SOURCES = [
+            { id: generateId(), name: 'Salário', expectedAmount: 5000, color: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
+            { id: generateId(), name: 'Freelance', expectedAmount: 1000, color: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' }
+        ];
 
         // ============================================================
         // ESTADO GLOBAL
@@ -159,6 +169,19 @@
             selectedBank: '',
             
             activeSetupTab: 'banks',
+            
+            // Campos para formulários
+            newPendingTitle: '',
+            newPendingAmount: '',
+            newPendingSource: '',
+            newReceivableTitle: '',
+            newReceivableAmount: '',
+            newReceivableDate: '',
+            newReceivableSource: '',
+            newDebtTitle: '',
+            newDebtAmount: '',
+            newDebtBank: '',
+            newDebtDueDate: '',
         };
 
         // ============================================================
@@ -166,27 +189,38 @@
         // ============================================================
         function loadState() {
             try {
-                const saved = localStorage.getItem('finance_data_v8');
+                const saved = localStorage.getItem('easy_finances_data');
                 if (saved) {
                     const data = JSON.parse(saved);
                     Object.assign(state, data);
+                    console.log('✅ Dados carregados:', data);
                     return true;
                 }
-            } catch (e) { console.log('Erro ao carregar:', e); }
+            } catch (e) { 
+                console.log('❌ Erro ao carregar:', e); 
+            }
             return false;
         }
 
         function saveState() {
             try {
-                localStorage.setItem('finance_data_v8', JSON.stringify(state));
-                console.log('💾 Estado salvo!');
-            } catch (e) { console.log('Erro ao salvar:', e); }
+                const dataToSave = JSON.stringify(state);
+                localStorage.setItem('easy_finances_data', dataToSave);
+                console.log('💾 Estado salvo!', state.banks.length, 'bancos,', state.categories.length, 'categorias');
+                return true;
+            } catch (e) { 
+                console.log('❌ Erro ao salvar:', e);
+                return false;
+            }
         }
 
         function showToast(message, type = 'success') {
             state.toast = { message, type };
             render();
-            setTimeout(() => { state.toast = null; render(); }, 3500);
+            setTimeout(() => { 
+                state.toast = null; 
+                render(); 
+            }, 3500);
         }
 
         function getTotalBalance() { 
@@ -207,7 +241,7 @@
         }
 
         // ============================================================
-        // FUNÇÕES DE ADICIONAR - COM IDs
+        // FUNÇÕES DE ADICIONAR
         // ============================================================
         function addBank() {
             console.log('🔍 addBank chamado');
@@ -228,21 +262,26 @@
                 return;
             }
             
-            state.banks.push({
+            if (state.banks.some(b => b.name === name)) {
+                showToast('❌ Este banco já está cadastrado!', 'error');
+                return;
+            }
+            
+            const newBank = {
                 id: generateId(),
                 name: name,
                 balance: balance,
                 color: bankColors[name] || 'bg-gray-600',
                 icon: name.charAt(0).toUpperCase(),
-            });
+            };
             
+            state.banks.push(newBank);
             nameInput.value = '';
             balanceInput.value = '';
             
             saveState();
             render();
             showToast(`🏦 Banco ${name} adicionado!`);
-            console.log('✅ Bancos:', state.banks);
         }
 
         function addCategory() {
@@ -264,6 +303,11 @@
                 return;
             }
             
+            if (state.categories.some(c => c.name === name)) {
+                showToast('❌ Esta categoria já existe!', 'error');
+                return;
+            }
+            
             state.categories.push({
                 id: generateId(),
                 name: name,
@@ -278,7 +322,6 @@
             saveState();
             render();
             showToast(`📂 Categoria ${name} adicionada!`);
-            console.log('✅ Categorias:', state.categories);
         }
 
         function addSource() {
@@ -300,6 +343,11 @@
                 return;
             }
             
+            if (state.incomeSources.some(s => s.name === name)) {
+                showToast('❌ Esta fonte já existe!', 'error');
+                return;
+            }
+            
             state.incomeSources.push({
                 id: generateId(),
                 name: name,
@@ -313,7 +361,6 @@
             saveState();
             render();
             showToast(`💰 Fonte ${name} adicionada!`);
-            console.log('✅ Fontes:', state.incomeSources);
         }
 
         // ============================================================
@@ -361,40 +408,40 @@
                 }
             }
             state.transactions = state.transactions.filter(t => t.id !== id);
-            showToast('🗑️ Transação removida');
             saveState();
             render();
+            showToast('🗑️ Transação removida');
         }
 
         function deleteDebt(id) {
             if (confirm('Excluir esta dívida?')) {
                 state.debts = state.debts.filter(d => d.id !== id);
-                showToast('⚠️ Dívida removida!');
                 saveState();
                 render();
+                showToast('⚠️ Dívida removida!');
             }
         }
 
         function deletePending(id) {
             if (confirm('Excluir este pendente?')) {
                 state.pendingReceipts = state.pendingReceipts.filter(p => p.id !== id);
-                showToast('⏳ Pendente removido!');
                 saveState();
                 render();
+                showToast('⏳ Pendente removido!');
             }
         }
 
         function deleteReceivable(id) {
             if (confirm('Excluir este agendamento?')) {
                 state.receivables = state.receivables.filter(r => r.id !== id);
-                showToast('📅 Agendamento removido!');
                 saveState();
                 render();
+                showToast('📅 Agendamento removido!');
             }
         }
 
         // ============================================================
-        // FUNÇÕES DE EDIÇÃO
+        // FUNÇÕES DE TRANSAÇÃO
         // ============================================================
         function startEditTransaction(id) {
             const tx = state.transactions.find(t => t.id === id);
@@ -448,14 +495,11 @@
             state.modalTitle = '';
             state.modalAmount = '';
             
-            showToast('✏️ Transação editada!');
             saveState();
             render();
+            showToast('✏️ Transação editada!');
         }
 
-        // ============================================================
-        // SISTEMA DE TRANSAÇÃO
-        // ============================================================
         function submitTransaction(e) {
             e.preventDefault();
             if (state.isEditing) {
@@ -494,9 +538,9 @@
                     categoryOrSource: category,
                     bank: bank,
                 });
-                showToast(`💰 ${formatCurrency(value)} recebido!`);
                 saveState();
                 render();
+                showToast(`💰 ${formatCurrency(value)} recebido!`);
                 return;
             }
 
@@ -512,9 +556,9 @@
                     bank: bank,
                     paymentMethod: 'à vista',
                 });
-                showToast(`💸 ${formatCurrency(value)} pago!`);
                 saveState();
                 render();
+                showToast(`💸 ${formatCurrency(value)} pago!`);
                 return;
             }
 
@@ -602,9 +646,9 @@
             });
 
             state.showPaymentOptions = false;
-            showToast(`✅ Despesa paga usando saldo de ${fromBank}!`);
             saveState();
             render();
+            showToast(`✅ Despesa paga usando saldo de ${fromBank}!`);
         }
 
         function setupInstallment() {
@@ -668,16 +712,16 @@
             }
 
             state.showPaymentOptions = false;
-            showToast(`📅 Compra parcelada em ${count}x!`);
             saveState();
             render();
+            showToast(`📅 Compra parcelada em ${count}x!`);
         }
 
         function cancelTransaction() {
             state.showPaymentOptions = false;
             state.showModal = false;
-            showToast('❌ Transação cancelada', 'error');
             render();
+            showToast('❌ Transação cancelada', 'error');
         }
 
         // ============================================================
@@ -750,36 +794,42 @@
             });
             
             state.debts = state.debts.filter(d => d.id !== debtId);
-            showToast(`✅ Dívida quitada!`);
             saveState();
             render();
+            showToast(`✅ Dívida quitada!`);
         }
 
-        function addManualDebt(e) {
-            e.preventDefault();
-            if (!state.newDebtTitle || !state.newDebtAmount) return;
+        function addManualDebtFromInputs() {
+            const title = document.getElementById('debtTitleInput')?.value;
+            const amount = document.getElementById('debtAmountInput')?.value;
+            const bank = document.getElementById('debtBankInput')?.value;
+            
+            if (!title || !amount) {
+                showToast('❌ Preencha título e valor!', 'error');
+                return;
+            }
             
             state.debts.push({
                 id: generateId(),
-                title: state.newDebtTitle.trim(),
-                amount: Number(state.newDebtAmount),
-                bank: state.newDebtBank || state.banks[0]?.name || 'Outro',
-                dueDate: state.newDebtDueDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                title: title.trim(),
+                amount: Number(amount),
+                bank: bank || state.banks[0]?.name || 'Outro',
+                dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
                 createdAt: new Date().toISOString().split('T')[0],
                 status: 'pending',
                 installmentCount: 1,
-                installmentValue: Number(state.newDebtAmount),
+                installmentValue: Number(amount),
                 paidInstallments: 0,
-                originalTitle: state.newDebtTitle.trim(),
+                originalTitle: title.trim(),
             });
             
-            state.newDebtTitle = '';
-            state.newDebtAmount = '';
-            state.newDebtDueDate = '';
+            document.getElementById('debtTitleInput').value = '';
+            document.getElementById('debtAmountInput').value = '';
+            document.getElementById('debtBankInput').value = '';
             
-            showToast('⚠️ Dívida registrada!');
             saveState();
             render();
+            showToast('⚠️ Dívida registrada!');
         }
 
         // ============================================================
@@ -821,9 +871,9 @@
                 categoryOrSource: pending.source,
                 bank: pending.source,
             });
-            showToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
             saveState();
             render();
+            showToast(`✅ ${formatCurrency(pending.amount)} confirmado!`);
         }
 
         function addPending(e) {
@@ -839,9 +889,9 @@
             });
             state.newPendingTitle = '';
             state.newPendingAmount = '';
-            showToast('📌 Pendente registrado!');
             saveState();
             render();
+            showToast('📌 Pendente registrado!');
         }
 
         function receiveReceivable(id) {
@@ -859,9 +909,9 @@
                 categoryOrSource: rec.source,
                 bank: rec.source,
             });
-            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
             saveState();
             render();
+            showToast(`💰 ${formatCurrency(rec.amount)} recebido!`);
         }
 
         function addReceivable(e) {
@@ -879,9 +929,9 @@
             state.newReceivableTitle = '';
             state.newReceivableAmount = '';
             state.newReceivableDate = '';
-            showToast('📅 Agendamento criado!');
             saveState();
             render();
+            showToast('📅 Agendamento criado!');
         }
 
         function toggleReminder(id) {
@@ -918,9 +968,9 @@
                 toBank: toBank,
             });
             
-            showToast(`🔄 Transferência de ${formatCurrency(value)} realizada!`);
             saveState();
             render();
+            showToast(`🔄 Transferência de ${formatCurrency(value)} realizada!`);
         }
 
         function doTransfer() {
@@ -961,8 +1011,17 @@
 
         function resetApp() {
             if (confirm('Resetar todos os dados?')) {
-                localStorage.clear();
-                location.reload();
+                localStorage.removeItem('easy_finances_data');
+                state.banks = JSON.parse(JSON.stringify(DEFAULT_BANKS));
+                state.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+                state.incomeSources = JSON.parse(JSON.stringify(DEFAULT_INCOME_SOURCES));
+                state.transactions = [];
+                state.debts = [];
+                state.pendingReceipts = [];
+                state.receivables = [];
+                saveState();
+                render();
+                showToast('🔄 Dados resetados!');
             }
         }
 
@@ -978,22 +1037,14 @@
         // ============================================================
         function renderOnboarding() {
             const bankOptions = Object.keys(bankColors).map(b => `<option value="${b}">${b}</option>`).join('');
-            const pastelColors = [
-                { name: 'Azul', bg: 'bg-[#ECF5FC] text-sky-800 border-sky-200/60' },
-                { name: 'Pêssego', bg: 'bg-[#FDF1EB] text-amber-800 border-orange-200/60' },
-                { name: 'Lilás', bg: 'bg-[#F5EEFB] text-purple-800 border-purple-200/60' },
-                { name: 'Verde', bg: 'bg-[#EAF7EE] text-emerald-800 border-emerald-200/60' },
-            ];
-            const colorOptions = pastelColors.map(c => `<option value="${c.bg}">${c.name}</option>`).join('');
-
+            
             return `
                 <div class="max-w-4xl mx-auto p-6 animate-fade-in">
                     <div class="text-center mb-8">
-                        <h1 class="text-3xl font-extrabold text-[#1A1A1A]">🏦 Configurar Finanças</h1>
+                        <h1 class="text-3xl font-extrabold text-[#1A1A1A]">🏦 Configurar Easy Finances</h1>
                         <p class="text-gray-500 mt-2">Adicione seus bancos, categorias e fontes de renda</p>
                     </div>
 
-                    <!-- Status -->
                     <div class="grid grid-cols-3 gap-4 mb-6">
                         <div class="card text-center">
                             <p class="text-2xl font-bold text-purple-600">${state.banks.length}</p>
@@ -1009,7 +1060,6 @@
                         </div>
                     </div>
 
-                    <!-- Tabs -->
                     <div class="flex gap-2 mb-6 flex-wrap">
                         <button onclick="state.activeSetupTab='banks';render()" 
                                 class="btn ${state.activeSetupTab === 'banks' ? 'btn-primary' : 'bg-gray-100 text-gray-600'}">
@@ -1025,11 +1075,9 @@
                         </button>
                     </div>
 
-                    <!-- Conteúdo -->
                     <div class="card">
                         ${state.activeSetupTab === 'banks' ? `
                             <h3 class="font-bold mb-4">Contas Bancárias</h3>
-                            
                             ${state.banks.length > 0 ? `
                                 <div class="space-y-2 mb-4">
                                     ${state.banks.map(b => `
@@ -1059,7 +1107,6 @@
 
                         ${state.activeSetupTab === 'categories' ? `
                             <h3 class="font-bold mb-4">Categorias de Gastos</h3>
-                            
                             ${state.categories.length > 0 ? `
                                 <div class="space-y-2 mb-4">
                                     ${state.categories.map(c => `
@@ -1083,7 +1130,6 @@
 
                         ${state.activeSetupTab === 'sources' ? `
                             <h3 class="font-bold mb-4">Fontes de Renda</h3>
-                            
                             ${state.incomeSources.length > 0 ? `
                                 <div class="space-y-2 mb-4">
                                     ${state.incomeSources.map(s => `
@@ -1114,16 +1160,14 @@
         }
 
         // ============================================================
-        // RENDER DASHBOARD - COMPLETO
+        // RENDER DASHBOARD
         // ============================================================
         function renderDashboard() {
             const totalBalance = getTotalBalance();
             const totalDebts = getTotalDebts();
             const netWorth = getNetWorth();
             const isNegative = netWorth < 0;
-            const isEmpty = state.transactions.length === 0;
 
-            // Toast
             const toastHTML = state.toast ? `
                 <div class="fixed bottom-6 right-6 z-50 bg-[#2D3436] text-white rounded-2xl p-4 shadow-2xl flex items-center gap-3 max-w-sm animate-pop-in">
                     <div class="p-1 rounded-full ${state.toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}">
@@ -1135,15 +1179,11 @@
                 </div>
             ` : '';
 
-            // Modal de Transação
-            const modalTitle = state.isEditing ? '✏️ Editar Transação' : '📝 Novo Lançamento';
-            const modalButtonText = state.isEditing ? 'Salvar Alterações' : 'Registrar Lançamento';
-
             const modalHTML = state.showModal ? `
                 <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
                     <div class="bg-white rounded-3xl w-full max-w-md p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-extrabold text-lg">${modalTitle}</h3>
+                            <h3 class="font-extrabold text-lg">${state.isEditing ? '✏️ Editar Transação' : '📝 Novo Lançamento'}</h3>
                             <button onclick="state.showModal=false;state.isEditing=false;state.editingId=null;render()" class="text-slate-400 hover:text-slate-600">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -1184,14 +1224,13 @@
                             </select>
                             
                             <button type="submit" class="w-full py-3 text-white font-bold text-sm rounded-xl ${state.modalType === 'expense' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-emerald-600 hover:bg-emerald-700'} transition-all">
-                                ${modalButtonText}
+                                ${state.isEditing ? 'Salvar Alterações' : 'Registrar Lançamento'}
                             </button>
                         </form>
                     </div>
                 </div>
             ` : '';
 
-            // Modal de Opções de Pagamento
             const paymentOptionsHTML = state.showPaymentOptions ? `
                 <div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
                     <div class="bg-white rounded-3xl w-full max-w-lg p-6 animate-pop-in max-h-[90vh] overflow-y-auto">
@@ -1245,9 +1284,7 @@
                 </div>
             ` : '';
 
-            // ============================================================
-            // SEÇÃO DE DÍVIDAS
-            // ============================================================
+            // Dívidas
             const debtsHTML = `
                 <div class="card mb-6 ${state.debts.length > 0 ? 'border-2 border-red-200' : ''}">
                     <div class="flex items-center justify-between mb-4">
@@ -1321,43 +1358,7 @@
                 </div>
             `;
 
-            // Função para adicionar dívida manual
-            window.addManualDebtFromInputs = function() {
-                const title = document.getElementById('debtTitleInput')?.value;
-                const amount = document.getElementById('debtAmountInput')?.value;
-                const bank = document.getElementById('debtBankInput')?.value;
-                
-                if (!title || !amount) {
-                    showToast('❌ Preencha título e valor!', 'error');
-                    return;
-                }
-                
-                state.debts.push({
-                    id: generateId(),
-                    title: title.trim(),
-                    amount: Number(amount),
-                    bank: bank || state.banks[0]?.name || 'Outro',
-                    dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-                    createdAt: new Date().toISOString().split('T')[0],
-                    status: 'pending',
-                    installmentCount: 1,
-                    installmentValue: Number(amount),
-                    paidInstallments: 0,
-                    originalTitle: title.trim(),
-                });
-                
-                document.getElementById('debtTitleInput').value = '';
-                document.getElementById('debtAmountInput').value = '';
-                document.getElementById('debtBankInput').value = '';
-                
-                showToast('⚠️ Dívida registrada!');
-                saveState();
-                render();
-            };
-
-            // ============================================================
-            // TRANSFERÊNCIA ENTRE BANCOS
-            // ============================================================
+            // Transferência
             const transferHTML = state.banks.length >= 2 ? `
                 <div class="card mb-6">
                     <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">🔄 Transferir entre Bancos</h4>
@@ -1374,27 +1375,21 @@
                 </div>
             ` : '';
 
-            // ============================================================
-            // LISTA DE TRANSAÇÕES
-            // ============================================================
+            // Transações filtradas
             const filteredTransactions = state.transactions
                 .filter(t => t.title.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
                              t.categoryOrSource?.toLowerCase().includes(state.searchTerm.toLowerCase()))
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // ============================================================
-            // RENDER COMPLETO
-            // ============================================================
             return `
                 <div class="max-w-6xl mx-auto p-6 animate-fade-in">
                     ${toastHTML}
                     ${modalHTML}
                     ${paymentOptionsHTML}
 
-                    <!-- Header -->
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h1 class="text-2xl font-extrabold">💰 Finanças</h1>
+                            <h1 class="text-2xl font-extrabold">💰 Easy Finances</h1>
                             <p class="text-sm text-gray-500">Gestão de Saldo e Parcelas</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
@@ -1405,7 +1400,6 @@
                         </div>
                     </div>
 
-                    <!-- Cards de Resumo -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div class="card">
                             <p class="text-xs text-gray-500 uppercase font-bold">Saldo Total</p>
@@ -1438,7 +1432,6 @@
                     ${debtsHTML}
                     ${transferHTML}
 
-                    <!-- Bancos -->
                     <div class="card mb-6">
                         <h3 class="font-bold mb-4">🏦 Contas Bancárias</h3>
                         ${state.banks.length === 0 ? `
@@ -1463,7 +1456,6 @@
                         `}
                     </div>
 
-                    <!-- Busca e Transações -->
                     <div class="card">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-bold">📊 Transações</h3>
@@ -1503,7 +1495,7 @@
                         `}
                     </div>
 
-                    <p class="text-center text-xs text-gray-400 mt-8">© 2026 Finanças • Gestão de Saldo e Parcelas</p>
+                    <p class="text-center text-xs text-gray-400 mt-8">© 2026 Easy Finances • Gestão de Saldo e Parcelas</p>
                 </div>
             `;
         }
@@ -1511,16 +1503,29 @@
         // ============================================================
         // INICIALIZAÇÃO
         // ============================================================
-        const hasSaved = loadState();
-        if (!hasSaved) {
-            state.banks = [...DEFAULT_BANKS];
-            state.categories = [...DEFAULT_CATEGORIES];
-            state.incomeSources = [...DEFAULT_INCOME_SOURCES];
+        function initializeApp() {
+            const hasSaved = loadState();
+            
+            if (!hasSaved) {
+                console.log('📌 Nenhum dado salvo. Carregando dados padrão...');
+                state.banks = JSON.parse(JSON.stringify(DEFAULT_BANKS));
+                state.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+                state.incomeSources = JSON.parse(JSON.stringify(DEFAULT_INCOME_SOURCES));
+                saveState();
+            }
+            
+            render();
+            console.log('🚀 Easy Finances iniciado!');
+            console.log('📊 Estado:', {
+                bancos: state.banks.length,
+                categorias: state.categories.length,
+                fontes: state.incomeSources.length,
+                transacoes: state.transactions.length
+            });
         }
-        render();
-        console.log('🚀 App iniciado!');
-        console.log('📊 Estado:', state);
+
+        // Iniciar
+        initializeApp();
     </script>
 </body>
 </html>
-    
